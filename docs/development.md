@@ -21,8 +21,14 @@ make build-windows  # windows .exe  -> bin/credenciales.exe
 make run            # build and serve on http://localhost:8080
 make figures        # regenerate assets/figures/*.svg with graphviz
 make pairs          # regenerate testdata/pares.json (deterministic seeds)
+make pares-tabla    # render the 20 pairs as Markdown (docs/entregas/final/pares.md)
 make check-oracle   # Python differential, optional
+make smoke-windows  # start the .exe under Wine and validate one credential
 ```
+
+`make check` is the only gate and it stays Go-only. `make smoke-windows` needs Wine and
+curl; it builds the `.exe`, waits for `/api/salud` on port 8099, validates one credential
+and stops the process. Neither `make check` nor `make check-oracle` starts a server.
 
 ## Layout rules
 

@@ -2,7 +2,7 @@ GO ?= go
 BIN := bin/credenciales
 PYTHON ?= python3
 
-.PHONY: check check-oracle fmt test build build-windows run figures pairs pares-tabla smoke-windows
+.PHONY: check check-oracle fmt test build build-windows run figures pairs pares-tabla documento smoke-windows
 
 # Single quality gate: format check (no rewrite), lint, tests. Read-only,
 # non-interactive, Go-only. Never weaken a step to make it pass.
@@ -45,6 +45,11 @@ pairs:
 pares-tabla:
 	@mkdir -p docs/entregas/final
 	$(GO) run ./cmd/pares -md > docs/entregas/final/pares.md
+
+# Render the final document to .docx and .pdf. Optional tooling: needs
+# python-docx and LibreOffice, and the outputs are committed anyway.
+documento:
+	$(PYTHON) tools/documento/exportar.py
 
 # Smoke test of the Windows binary under Wine: start it, wait for /api/salud,
 # validate one credential, stop it. Kept out of `check`, which must stay

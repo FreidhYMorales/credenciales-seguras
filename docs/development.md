@@ -6,7 +6,8 @@
 |---|---|---|
 | Go | 1.27+ | build, test, run |
 | Graphviz `dot` | 16+ | regenerating `assets/figures/*.svg` (build time only) |
-| Python 3 | 3.11+ | `make check-oracle` only (optional) |
+| Python 3 | 3.11+ | `make check-oracle` and `make documento` (optional) |
+| python-docx + LibreOffice | any recent | `make documento` only (optional) |
 
 The runtime binary needs none of them.
 
@@ -23,6 +24,7 @@ make figures        # regenerate assets/figures/*.svg with graphviz
 make pairs          # regenerate testdata/pares.json (deterministic seeds)
 make pares-tabla    # render the 20 pairs as Markdown (docs/entregas/final/pares.md)
 make check-oracle   # Python differential, optional
+make documento      # render the final document to .docx and .pdf, optional
 make smoke-windows  # start the .exe under Wine and validate one credential
 ```
 

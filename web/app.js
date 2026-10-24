@@ -613,12 +613,17 @@ function renderReglas() {
       const c = r.conteos
         ? `${r.conteos.nfa} / ${r.conteos.sub} / ${r.conteos.tree} / ${r.conteos.min}`
         : '—';
+      // {15,64} is expanded by construction, so P1's translation runs to a few
+      // thousand characters. Clamping it keeps the table readable; the full
+      // expression opens on click.
+      const re2 = r.re2 ? esc(r.re2) : '—';
+      const largo = r.re2 && r.re2.length > 160;
       return `<tr>
         <td class="mono">${esc(r.id)}</td>
         <td>${esc(r.nombre)}</td>
         <td>${r.tipo === 'accept' ? 'aceptación' : 'rechazo'}</td>
         <td class="er">${r.er ? esc(r.er) : '<span class="empty">conjunto</span>'}</td>
-        <td class="er">${r.re2 ? esc(r.re2) : '—'}</td>
+        <td class="er"><div class="re2${largo ? ' clamp' : ''}"${largo ? ' title="clic para expandir"' : ''}>${re2}</div></td>
         <td class="num">${c}</td>
         <td><button class="ghost small" data-open="${esc(r.id)}">ver</button></td>
       </tr>`;
@@ -628,6 +633,10 @@ function renderReglas() {
     <thead><tr><th>Id</th><th>Regla</th><th>Tipo</th><th>ER formal</th><th>Traducción RE2</th>
       <th class="num">AFND / sub / árbol / mín</th><th></th></tr></thead>
     <tbody>${filas}</tbody></table>`;
+
+  $$('#reglas-tabla .re2.clamp').forEach((el) => el.addEventListener('click', () => {
+    el.classList.toggle('abierto');
+  }));
 
   $$('[data-open]').forEach((b) => b.addEventListener('click', () => {
     showScreen('explorador');

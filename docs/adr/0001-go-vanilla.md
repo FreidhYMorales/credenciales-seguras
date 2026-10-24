@@ -17,7 +17,7 @@ from the same binary. Keep the Python engine as a test oracle only.
 ## Consequences
 
 - One static binary, no venv, no `pip install`, no build step in the browser.
-- Automata build in milliseconds; startup cost is negligible.
+- All 15 automata build once in ~970 ms at startup; the server pays it once.
 - The port is the highest-risk item and is verified against the RE2 oracle and against
   the state counts printed in the document.
 - No third-party Go module; the whole dependency surface is the standard library.

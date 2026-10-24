@@ -16,9 +16,11 @@ build at startup, and it must be deterministic given a seed.
   still reach an accepting state.
 - `P6` (repetition), `P7` (sequence) and `P8` (forbidden words) are handled by rejection
   sampling: draw a walk, reject, redraw. 200 retries with the same seeded PRNG.
-- Emails walk `C*` and reject-sample `C2`-`C6`.
-- `minimize` must return a full DFA (classes + transition table), not a state count, or
-  the product cannot be built.
+- Emails walk `C*` with the same reachability guidance towards a seeded target length of
+  12-32 (accept at exactly that length, else redraw), and reject-sample `C2`-`C6`.
+- `minimize` must return a DFA (classes + transition table), not a state count, or the
+  product cannot be built. It is a **partial** DFA: the dead class is removed, a missing
+  transition means reject, `P1_min` is 65 and the reachable product is 944 states.
 
 ## Consequences
 

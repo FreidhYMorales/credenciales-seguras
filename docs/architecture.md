@@ -12,7 +12,7 @@ Source of truth for scope: `docs/plans/app-credenciales/plan.md`.
 
 | Layer | Choice | Why |
 |---|---|---|
-| Backend | Go 1.27, stdlib only | one static binary, no venv, automata build in ms |
+| Backend | Go 1.27, stdlib only | one static binary, no venv, 15 automata in ~970 ms at startup |
 | Frontend | HTML + CSS + JS vanilla, no build step | served by the same binary, zero toolchain |
 | Graph rendering | Graphviz `dot` at build time, SVG embedded | Windows demo machine may not have Graphviz |
 | Persistence | none | nothing to store, no accounts |
@@ -90,7 +90,9 @@ adds the Python differential and is never required to run the app.
 
 - `//go:embed` cannot escape its package (see `embed.go` per tree).
 - The generator multiplies **minimized** DFAs (`P1_min` 65 x 2^4 = 1040), not subset DFAs
-  (257 x 9^4 = 1.69 M). `minimize` therefore returns a DFA, not a count.
+  (257 x 9^4 = 1.69 M). `minimize` therefore returns a DFA, not a count. The result is
+  partial: the dead class is removed, so a missing transition means reject and `P1_min`
+  is 65, not 66. The reachable product measures 944 states.
 - Explorer graphs are drawn only when a view has <= 40 states and <= 80 edges; above that
   the endpoint returns `svg: null` and the UI shows counts plus a paginated table.
 - Windows binary is cross-compiled and tested during rehearsal; the Linux build is the

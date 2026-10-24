@@ -1,6 +1,6 @@
 # Plan: lexical validator and generator of secure credentials
 
-- Status: draft (review 2 resolutions applied; review 3 pending)
+- Status: v4 (reviews 1-3 applied; implementation complete and pushed)
 - Deadline: 2026-10-28 (presentation window 2026-10-26 to 2026-10-28)
 - Mode: collaborative (3 people: 1 coder, 2 document/video)
 - Supersedes: the Python prototype in `codigo_avance/` as runtime; it is kept as test oracle and figure source only.
@@ -23,7 +23,7 @@ Demo machine: the development laptop (Linux) by default; the Windows `.exe` is t
 
 Source material read in full:
 
-- `TAREA FINAL AUTÓMATAS PD.pdf` — assignment: NIST SP 800-63B + CIS policy, RFC 5322 email syntax, ER design, Thompson NFA, AFD, application with per-rule report, automaton-guided generation and security level. Grading: 5 pts advance, 5 pts presentation, 5 pts document + 10 valid pairs + 10 invalid pairs + code + 1-minute video.
+- `TAREA FINAL AUTÓMATAS PD.pdf` — assignment: NIST SP 800-63B + CIS policy, RFC 5322 email syntax, ER design, Thompson NFA, AFD, application with per-rule report, automaton-guided generation and security level. Grading: the final is **10 pts = 5 presentation + 5 deliverables** (document, 10 valid pairs, 10 invalid pairs, code, 1-minute video). The 5-point advance is a separate grade already earned, not part of the final 10.
 - `AYLF Final Avance corregido.pdf` (35 pp.) — already covers steps 1-4: alphabets, rules P0-P8 and C0-C6, ER per rule, regular grammars and derivations, Thompson construction with state tables, tree method, minimal DFA, test annex and security-level criterion (Annex C).
 - `codigo_avance/` — working Python engine: AST, Thompson NFA, subset construction, tree/followpos DFA, Moore minimization, equivalence check, DOT export, per-rule validator. Verified: state counts match the document exactly (P2 34/9/2, email 136/33/12/8, etc.).
 
@@ -60,7 +60,7 @@ Key events: validate, generate, simulate, inspect automaton, load pair.
 
 Stack decided with the user: **Go 1.27** backend (stdlib only: `net/http`, `embed`, `html/template`, `encoding/json`, `math/rand`) and **HTML/CSS/JS vanilla** frontend, no build step, no framework.
 
-Rationale: single static binary for the demo (no venv, no `pip install`), automata built in milliseconds instead of seconds, and Go's `regexp` is RE2 without lookaheads, so the app cannot cheat with `(?=.*[A-Z])` and must use the product automaton the assignment asks for.
+Rationale: single static binary for the demo (no venv, no `pip install`), the 15 automata build once in ~970 ms at startup instead of 9 s in Python, and Go's `regexp` is RE2 without lookaheads, so the app cannot cheat with `(?=.*[A-Z])` and must use the product automaton the assignment asks for.
 
 Proposed layout (each embedded tree has its own `embed.go`, because `//go:embed` cannot reference parent directories):
 
@@ -100,17 +100,29 @@ ADRs to write during bootstrap:
 
 ## Schedule
 
-Presentation window 2026-10-26 to 2026-10-28. The coder carries ~4.45 person-days in 3 calendar days, so the working assumption is 10-12 h/day for the coder on Saturday and Sunday.
+Presentation window 2026-10-26 to 2026-10-28; the exact slot is still unknown, so the
+plan targets the worst case (Monday 26).
 
-| Day | Coder | Document/video (2 people) |
-|---|---|---|
-| Sat 24 | Engine: AST, Thompson NFA, subset, tree, `minimize` returning a DFA, equivalence, `toRE2`; `docs/api.md` frozen by 18:00 | "Pasos 5 y 6" section, test-case tables and the 10 invalid pairs authored by hand (no app needed) |
-| **Sun 25, 12:00** | **Checkpoint**: engine green (all 15 automata + RE2 oracle at 0 discrepancies) or cut applied | Document sections advanced |
-| Sun 25 | Rules, validator, generator, API, Validate and Generate screens | Figures via `cmd/figgen`, document body, advance screenshots |
-| Mon 26 | Explorer, Rules, Test pairs, cross-compile, rehearsal | Final screenshots, video, rehearsal |
-| 26-28 | Presentation | Presentation |
+The original estimate was 5.25 person-days, **4.55 of them on the coder** (the earlier
+4.45 was an arithmetic error: the README row was left out). That was the critical path
+and it did not fit the window at 10 h/day: Saturday, Sunday and Monday morning give at
+most 30-36 h against 36.4 h needed. The implementation is therefore no longer scheduled
+as human typing time: it was written by the coding agent on 24 Oct, is green and is
+pushed. What remains is the human work that cannot be delegated.
 
-Checkpoint rule: if the engine is not green at Sunday noon, drop the Explorer as a whole (counts + transition table only, ~0.5-0.7 d recovered) and lean on the document's Figures 3-6. Do not wait until Monday.
+| Date | State |
+|---|---|
+| Sat 24 | **Implementation complete.** Engine, 15 automata, validator, generator, API, five screens, 20 pairs, 26 figures. `make check` and `make check-oracle` green; `main` pushed. |
+| Sun 25 | Document: test-case tables, the 20 pairs, steps 5-6, screenshots. Video recorded against the frozen build. |
+| Mon 26 | Rehearsal of the run sheet, Windows cross-compile smoke test, re-record slot. |
+| 26-28 | Presentation. |
+
+**Checkpoint, now measurable:** `make check && make check-oracle` must be green. That is
+the only pass criterion, it runs in seconds, and it does not depend on work scheduled
+later in the day — the earlier wording ("all 15 automata + RE2 oracle by Sunday noon")
+was impossible to satisfy because those rows were scheduled after the checkpoint. The
+day-1 cut no longer applies to the engine; if the human work slips, the contingency order
+below still holds.
 
 ## Screens
 
@@ -264,35 +276,75 @@ No persistence: nothing is stored, no cookies, no accounts.
 | Cross-compile Windows + rehearsal | MUST | 0.1 | medium |
 | Repo + README + run instructions | MUST | 0.1 | deliverable |
 
-Total ~5.25 person-days: ~4.45 on the coder, ~0.8 on the two document/video people. The coder's load is the critical path; see the Schedule section.
+Total ~5.25 person-days: **~4.55 on the coder, ~0.7 on the two document/video people**
+(document 0.5 + video 0.2). The coder's load was the critical path; see the Schedule
+section for how it was actually absorbed.
 
 ## Contingency cut order
 
-Applied top-down only when the Sunday-noon checkpoint fails, and recorded in the plan when applied:
+Applied top-down only if the human work slips, and recorded in the plan when applied.
+Each cut names exactly what disappears, so the post-cut definition of done stays true.
 
-1. Rules screen as a separate route: fold the table into the explorer sidebar (keeps the ER, RE2 and standard columns).
-2. Explorer `tree`/`min` views and SVGs (keep the NFA/subset graphs, counts and tables).
-3. Email generation toggle in the UI (API stays, pairs are generated by script).
-4. `/api/simular` trace and `vista=min` (the Validate report and the counts carry the story).
-5. Test pairs screen, last: if cut, the final minute of the demo uses the document table.
+1. **Explorer `tree`/`min` SVGs and `vista=min`.** The route, the sidebar, the four
+   counts, the paginated tables and the trace stay; only the two graphs and the fourth
+   tab go. The P2 NFA (34 states) and subset (9 states) graphs are kept: they are the
+   demo's centrepiece. Saves ~0.3 d.
+2. **Email generation toggle in the UI.** `POST /api/generar` keeps working and the 10
+   email pairs are still produced by `cmd/pares`; only the button disappears. Saves
+   ~0.15 d and costs nothing that is graded (the assignment says "a password **or** an
+   email").
+3. **Rules screen as a separate route.** Fold the table into the explorer sidebar; the
+   ER, RE2 and standard columns survive. Only valid if cut 1 was *not* applied, because
+   the sidebar must still exist. Saves ~0.2 d.
+4. **`/api/simular` trace.** The Validate report and the counts carry the story. This
+   voids the "simulates `Aa1!`" line of the definition of done.
+5. **Test pairs screen, last.** The document table plus a screenshot replace it. This
+   voids the "Pairs lists 20 rows" line.
 
-No permutation of these recovers the full 1.45-day gap; if the checkpoint fails, dropping the Explorer as a whole is the day-1 decision, not a day-3 improvisation.
+The cut line is a polish lever, not a rescue: no permutation of these five recovers the
+1.45-day gap that the original schedule had. That gap was closed by writing the code with
+the agent, not by cutting scope.
 
 ## Definition of done
 
-- `make check` (Go only) runs `gofmt -l`, `go vet`, `go test ./...`, the RE2 oracle comparison and the 20-pair regeneration; it prints one PASS/FAIL line with discrepancy counts. `make check-oracle` adds the Python differential and is not required to run the app.
-- Port correctness: the AFD sizes match the document table (13 printed rows; P3/P4/P5 are identical to P2; COMP excluded by design), `min ≡ tree` by the equivalence check, and 0 disagreements against the RE2 oracle over 1500 random strings per rule.
-- Generator property: 1000 generated values per kind are 100 % accepted; the reachable product has <= 1040 states; the same seed reproduces the same value and path across 100 runs and two process restarts.
-- Boundaries: 14/15/16, 19/20, 64/65 characters; 63/64-character labels; 255/256-character domain.
-- Screen acceptance: Validate names the failing rule for each of the 20 pairs; Generate reproduces seed `2026`; Explorer shows 34/9/2 for P2 and simulates `Aa1!`; Rules lists 17 rows (15 with ER); Pairs lists 20 rows.
-- Deliverables: document updated with test cases, 20 pairs, steps 5-6 and screenshots; video <= 1 minute; both binaries built.
+Each line states what it measures and, where a cut voids it, which one.
+
+- **Gate.** `make check` is Go-only and non-interactive: `gofmt -l` (must be empty),
+  `go vet ./...`, `go test ./...`. It is green from the first commit and never weakened.
+  `make check-oracle` adds the Python differential and is not required to run the app.
+- **Port correctness.** The four counts of **12 printed rows** match the advance document
+  digit for digit: P1, P2, P6, P7, P8, C1, C2, C3, C4, C5, C6, C\*. P3/P4/P5 are
+  identical to P2 by construction. COMP is excluded by design (document-only), so the
+  comparable set is 12 rows, not 13. `min ≡ tree` and `subset ≡ tree` hold by the
+  equivalence check for all 15 automata.
+- **Independent oracles.** RE2: 0 discrepancies over 1500 strings per rule (22 500
+  comparisons). Python: 15 rules with the same four counts and 6000 strings with the
+  same verdict, 0 discrepancies.
+- **Generator property.** 1000 passwords (lengths 15-64) and 300 emails are 100 %
+  accepted; the reachable product has **944** states, under the 1040 bound; the same
+  seed reproduces the same value and the same path, and the test runs it twice in one
+  process plus across restarts.
+- **Boundaries.** Password lengths 14/15/16 and 64/65, levels 19/20; email label 63/64,
+  local part 64/65, domain 255/256; spaces stripped on both kinds; a 20-character
+  password containing a blocklisted word is Baja, not Fuerte.
+- **Graded pairs.** `testdata/pares.json` regenerates byte for byte from its seeds; all
+  20 verdicts match; each of the 10 invalid pairs has exactly one defective credential
+  and names the rule that fails.
+- **Screen acceptance** (each line is voided by the cut in brackets): Validate names the
+  failing rule for the 10 invalid pairs and accepts the 10 valid ones; Generate
+  reproduces seed `2026` -> `>nslx613LK2%|#PxFbA5` (Fuerte, 131 bits) and seed `4490` ->
+  `IykLbhvynB@F.mT`; Explorer shows 34/9/2 for P2 and simulates `Aa1!` [cut 4]; Rules
+  lists 17 rows, 15 with ER [cut 3]; Pairs lists 20 rows [cut 5].
+- **Deliverables.** Document updated with test cases, the 20 pairs, steps 5-6 and
+  screenshots; video <= 1 minute; Linux and Windows binaries built.
 
 ## Demo data
 
-- `testdata/pares.json`: 10 valid pairs produced by `POST /api/generar` with `seed_email` and `seed_password`, and 10 invalid pairs **authored by hand** (they are not generated) covering length, missing special, missing digit, missing upper, missing lower, triple repetition, ascending sequence, forbidden word, invalid email structure, invalid TLD. Fields: `id`, `email`, `password`, `email_esperado`, `password_esperado`, `regla_fallida`, `seed_email`, `seed_password`.
-- `cmd/pares` calls the same handler as the API (in-process) and asserts the generated values match the file, so the regeneration test does not need a running server.
+- `testdata/pares.json`: 10 valid pairs produced by `POST /api/generar` with `seed_email` and `seed_password`, and 10 invalid pairs **authored by hand** (they are not generated) covering length, missing special, missing digit, missing upper, missing lower, triple repetition, ascending sequence, forbidden word, invalid email structure, invalid TLD. Fields: `id`, `email`, `password`, `email_esperado`, `password_esperado`, `regla_fallida`, `seed_email`, `seed_password`. Each invalid pair has exactly one defective credential, which is the one `regla_fallida` names.
+- `cmd/pares` calls the same generator as the API (in-process) and asserts the generated values match the file, so the regeneration test does not need a running server.
 - Seeds for the demo: `2026` (password, length 20), `4490` (email). Both must reproduce exactly on the presentation machine.
 - Sample strings from the document annex are reused where they overlap, so the app and the document agree.
+- **Email generation rule** (the earlier plan left it undefined): the walk targets a seeded length of **12-32 characters**; a draw stops when the automaton is in an accepting state at exactly that length, otherwise it is redrawn, up to 200 attempts with the same seeded PRNG. Atoms are weighted by the square of their size, so letters dominate and addresses look like addresses, and a quality filter rejects atext specials (``!#$%&'*+/=?^_`{|}~``) in the generated address even though the grammar allows them. The validator still accepts them, so the filter narrows generation without weakening validation.
 
 ## Data gaps & assumptions
 
@@ -319,20 +371,24 @@ No permutation of these recovers the full 1.45-day gap; if the checkpoint fails,
 
 ## Demo priorities
 
-Run sheet (10 minutes):
+Run sheet (targets 9:30, leaving 30 s of buffer under the 10-minute cap):
 
 | Time | Content |
 |---|---|
-| 0:00-1:00 | Problem, standards (NIST/CIS, RFC 5322) and a 30-second pass through the Rules screen with the ER and its RE2 translation |
-| 1:00-2:30 | Invalid password -> failing rule P1 and level Baja; then a valid one |
-| 2:30-4:00 | Invalid email -> C2 (double dot) and C5 (TLD); then a valid one |
-| 4:00-6:30 | Generate with seed 2026, show the walk, replay the seed, level Fuerte |
-| 6:30-9:00 | Explorer: P2 goes 34 (NFA) -> 9 (subset) -> 2 (tree/min), plus the trace |
-| 9:00-10:00 | Pairs table (the graded 20) and closing |
+| 0:00-0:50 | Problem, standards (NIST/CIS, RFC 5322) and a 30-second pass through the Rules screen with the ER and its RE2 translation |
+| 0:50-2:20 | Invalid password -> failing rule P1 and level Baja; then a valid one |
+| 2:20-3:50 | Invalid email -> C2 (double dot) and C5 (TLD); then a valid one |
+| 3:50-6:10 | Generate with seed 2026, show the walk, replay the seed, level Fuerte |
+| 6:10-8:20 | Explorer: P2 goes 34 (NFA) -> 9 (subset) -> 2 (tree/min), plus the trace |
+| 8:20-9:20 | Pairs table (the graded 20) and the repo: Go port, tests, `make check` |
+| 9:20-9:30 | Closing |
 
 Fallback: the 1-minute video plus a screenshot deck, opened before the demo starts.
 
-Video storyboard (<= 60 s): 0-10 s invalid password and its failing rule; 10-25 s a valid pair from the Pairs table; 25-40 s generate with seed 2026 and replay; 40-55 s Explorer with 34/9/2 and the trace; 55-60 s closing. Recorded Monday with the frozen build, with a re-record slot before the presentation.
+Video storyboard (target 55-57 s, under the 60 s cap): 0-8 s invalid password and its
+failing rule; 8-20 s a valid pair from the Pairs table; 20-35 s generate with seed 2026
+and replay; 35-50 s Explorer with 34/9/2 and the trace; 50-56 s the repo and closing.
+Recorded against the frozen build, with a re-record slot before the presentation.
 
 ## Collaboration
 
@@ -398,3 +454,26 @@ Reference: `plan-review-1.md`, `plan-review-2.md`.
 | R2-Q3 | Which MUST goes on day 1 if the gap is real? | Sunday-noon checkpoint: if the engine is not green, the Explorer drops to counts + table; no Python fallback, Go stays. | user |
 | R2-Q4 | Is the 34-state NFA graph required? | Yes: the per-view threshold (40 states / 80 edges) keeps it. | planner |
 | R2-Q5 | Where is the package uploaded? | Assumption: course platform, zip + repo link; README lists files. Open. | group |
+
+### Review 3
+
+Reference: `plan-review-3.md`. Verdict: PASS WITH CHANGES, 0 blockers.
+
+| # | Finding | Resolution | Decided by |
+|---|---|---|---|
+| N-M1 | Coder rows sum to 4.55, not 4.45; Monday had no hours | Arithmetic corrected and the human schedule replaced by the actual execution: the code was written by the agent on 24 Oct; the remaining days are document, video and rehearsal. | planner |
+| N-M2 | The Sunday-noon checkpoint could not be satisfied: its criterion depended on work scheduled after it | Checkpoint is now `make check && make check-oracle`, measurable in seconds and independent of later work. | planner |
+| N-M3 | The DoD required exactly what the cuts remove | Every DoD line that a cut voids now names that cut. | planner |
+| N-M4 | The Explorer cut was described two ways | Cut 1 is "drop the `tree`/`min` SVGs and `vista=min`, keep the route, sidebar, counts, tables and trace"; cut 3 (fold Rules into the sidebar) is only valid if cut 1 was not applied. | planner |
+| N-M5 | Email generation had no target length or stop rule | Seeded target 12-32; stop on an accepting state at exactly that length, otherwise redraw (200 attempts); atoms weighted by size squared; documented quality filter. | planner |
+| N-m1 | `docs/api.md` was referenced but missing | The file exists with the five contracts and the shared types. | planner |
+| N-m2 | One `regla_fallida` for two credentials | Each invalid pair has exactly one defective credential; the DoD and `testdata` say so. | planner |
+| N-m3 | `/api/reglas` lacked `tiene_er` and nullability | `tiene_er` plus nullable `er`/`re2`/`conteos` for P0/C0. | planner |
+| N-m4 | C\* missing from the sidebar and over the edge limit | The sidebar lists C\*; its subset (33 states / 156 edges) is a table, its tree (12/46) is drawn. | planner |
+| N-m5 | Grading summary added up to 15 | Final is 10 = 5 presentation + 5 deliverables; the advance 5 is separate and already earned. | planner |
+| N-m6 | Dead-state convention unstated | Partial DFA, dead class removed; `P1_min` = 65; reachable product = 944. | planner |
+| N-m7 | `toRE2` must escape class metacharacters | Test over all 94 symbols, plus a negative test proving an unescaped `]` does not compile. | planner |
+| N-m8 | DoD counts and boundaries imprecise | 12 compared rows + P3/P4/P5 ≡ P2; 64/65 local, spaces and the 20-character blocklist case added. | planner |
+| N-m9 | Video and run sheet had no buffer and no code slot | Run sheet targets 9:30 and includes the repo; video targets 55-57 s. | planner |
+| N-m10 | "Automata built in milliseconds" was unverified | Measured: ~970 ms once at startup for all 15. Eager build kept; no lazy loading needed. | planner |
+| N-m11 | Scope split off by 0.1 day | 4.55 coder + 0.7 document/video = 5.25. | planner |

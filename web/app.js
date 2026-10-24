@@ -43,6 +43,7 @@ const state = {
   regla: null,
   vista: 'sub',
   pagina: 1,
+  centro: null,
   filtro: 'todas',
   pares: [],
   genTipo: 'password',
@@ -65,7 +66,10 @@ $$('#tabs button').forEach((b) => b.addEventListener('click', () => showScreen(b
 function setTipo(tipo) {
   state.tipo = tipo;
   $$('#tipo-seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tipo === tipo)));
-  $('#valor').placeholder = tipo === 'password' ? 'Escribí una contraseña' : 'Escribí un correo';
+  const par = tipo === 'par';
+  $('#simple-campos').hidden = par;
+  $('#par-campos').hidden = !par;
+  if (!par) $('#valor').placeholder = tipo === 'password' ? 'Escribí una contraseña' : 'Escribí un correo';
 }
 
 $$('#tipo-seg button').forEach((b) => b.addEventListener('click', () => setTipo(b.dataset.tipo)));
@@ -87,13 +91,46 @@ async function validar() {
   out.innerHTML = `<div class="card"><div class="empty">Validando…</div></div>`;
   try {
     const rep = await postJSON('/api/validar', { tipo: state.tipo, valor });
-    out.innerHTML = renderReporte(rep);
+    out.innerHTML = renderReporte(rep, valor);
   } catch (err) {
     out.innerHTML = `<div class="card">${errorBox(err)}</div>`;
   }
 }
 
-function renderReporte(rep) {
+// validarPar validates the two credentials at the same time and joins the two
+// reports under one verdict. The pair is valid only when both halves are.
+async function validarPar() {
+  const email = $('#par-email').value;
+  const pass = $('#par-pass').value;
+  const out = $('#reporte');
+  if (!email.trim() || !pass.trim()) {
+    out.innerHTML = `<div class="card"><div class="empty">Escribí el correo y la contraseña del par.</div></div>`;
+    return;
+  }
+  out.innerHTML = `<div class="card"><div class="empty">Validando el par…</div></div>`;
+  try {
+    const [repEmail, repPass] = await Promise.all([
+      postJSON('/api/validar', { tipo: 'email', valor: email }),
+      postJSON('/api/validar', { tipo: 'password', valor: pass }),
+    ]);
+    const valido = repEmail.valido && repPass.valido;
+    const fallas = [];
+    if (!repEmail.valido) fallas.push('el correo');
+    if (!repPass.valido) fallas.push('la contraseña');
+    const detalle = valido ? 'correo y contraseña válidos' : `falla ${fallas.join(' y ')}`;
+    const veredicto = `<div class="card">
+      <div class="verdict">
+        <span class="pill ${valido ? 'ok' : 'bad'}">${valido ? 'Par válido' : 'Par inválido'}</span>
+        <span>${esc(detalle)}</span>
+      </div>
+    </div>`;
+    out.innerHTML = veredicto + renderReporte(repEmail, email) + renderReporte(repPass, pass);
+  } catch (err) {
+    out.innerHTML = `<div class="card">${errorBox(err)}</div>`;
+  }
+}
+
+function renderReporte(rep, original) {
   const pill = rep.valido ? 'ok' : 'bad';
   const etiqueta = rep.valido ? 'VÁLIDA' : 'INVÁLIDA';
   const fallas = rep.reglas.filter((r) => r.evaluado && !r.ok).length;
@@ -118,7 +155,7 @@ function renderReporte(rep) {
       <td>${marca}</td><td>${esc(r.mensaje || '')}</td></tr>`;
   }).join('');
 
-  const normalizado = rep.normalizado !== $('#valor').value
+  const normalizado = rep.normalizado !== original
     ? `<div class="meta">Normalizado: <span class="mono">${esc(rep.normalizado)}</span></div>`
     : '';
 
@@ -138,6 +175,9 @@ function renderReporte(rep) {
 
 $('#validar').addEventListener('click', validar);
 $('#valor').addEventListener('keydown', (e) => { if (e.key === 'Enter') validar(); });
+$('#validar-par').addEventListener('click', validarPar);
+$('#par-email').addEventListener('keydown', (e) => { if (e.key === 'Enter') validarPar(); });
+$('#par-pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') validarPar(); });
 
 // ------------------------------------------------------------------ generar
 
@@ -235,6 +275,7 @@ function renderSidebar() {
 function selectRegla(id) {
   state.regla = state.reglas.find((r) => r.id === id) || null;
   state.pagina = 1;
+  state.centro = null;
   renderSidebar();
   cargarVista();
 }
@@ -242,6 +283,7 @@ function selectRegla(id) {
 $$('#explorador-vistas button').forEach((b) => b.addEventListener('click', () => {
   state.vista = b.dataset.vista;
   state.pagina = 1;
+  state.centro = null;
   $$('#explorador-vistas button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.vista === state.vista)));
   cargarVista();
 }));
@@ -253,6 +295,7 @@ async function cargarVista() {
 
   if (!r.tiene_er) {
     $('#explorador-conteos').innerHTML = '';
+    ocultarSubcontroles();
     $('#explorador-grafo').innerHTML = `<div class="note">${esc(r.id)} es una verificación de conjunto sobre el alfabeto: no tiene autómata.</div>`;
     $('#explorador-tabla').innerHTML = '<div class="empty">—</div>';
     $('#explorador-pager').innerHTML = '';
@@ -265,16 +308,178 @@ async function cargarVista() {
     `<span>Árbol <b>${c.tree}</b></span><span>Mínimo <b>${c.min}</b></span>`;
 
   try {
-    const datos = await api(`/api/automatas/${encodeURIComponent(r.id)}?vista=${state.vista}&pagina=${state.pagina}&limite=50`);
+    const datos = await api(urlVista());
     if (datos.svg) {
+      ocultarSubcontroles();
       $('#explorador-grafo').innerHTML = `<div class="graph">${datos.svg}</div>`;
     } else {
-      $('#explorador-grafo').innerHTML = `<div class="note">${esc(datos.motivo || 'Esta vista no se dibuja.')}</div>`;
+      // Too large for the pre-generated SVG: ask for a BFS ball and draw it.
+      await cargarSubgrafo();
     }
     renderTransiciones(datos);
   } catch (err) {
     $('#explorador-grafo').innerHTML = errorBox(err);
   }
+}
+
+function urlVista() {
+  const r = state.regla;
+  return `/api/automatas/${encodeURIComponent(r.id)}?vista=${state.vista}&pagina=${state.pagina}&limite=50`;
+}
+
+function urlSubgrafo() {
+  const profundidad = Number($('#sub-profundidad').value) || 2;
+  return `${urlVista()}&profundidad=${profundidad}&centro=${encodeURIComponent(state.centro || 'q0')}`;
+}
+
+function ocultarSubcontroles() {
+  $('#sub-controls').hidden = true;
+  $('#sub-info').textContent = '';
+}
+
+async function cargarSubgrafo() {
+  const r = state.regla;
+  if (!r || !r.tiene_er) return;
+  const turno = ++subTurno;
+  try {
+    const datos = await api(urlSubgrafo());
+    if (turno !== subTurno) return; // a newer request already won
+    mostrarSubgrafo(datos.subgrafo);
+  } catch (err) {
+    if (turno !== subTurno) return;
+    $('#explorador-grafo').innerHTML = errorBox(err);
+  }
+}
+
+let subTurno = 0;
+
+function mostrarSubgrafo(sg) {
+  const caja = $('#explorador-grafo');
+  $('#sub-controls').hidden = false;
+  if (!sg || !sg.nodos || !sg.nodos.length) {
+    caja.innerHTML = `<div class="note">No hay vecindad para el estado pedido.</div>`;
+    $('#sub-info').textContent = '';
+    return;
+  }
+  caja.innerHTML = `<div class="graph">${renderSubgrafo(sg)}</div>`;
+  $('#sub-info').textContent =
+    `vecindad de ${sg.centro} · ${sg.nodos.length} de ${sg.total_nodos} estados${sg.truncado ? ' · truncada' : ''}`;
+
+  $$('#explorador-grafo .sg-node').forEach((el) => el.addEventListener('click', () => {
+    if (el.dataset.id === sg.centro) return;
+    state.centro = el.dataset.id;
+    cargarSubgrafo();
+  }));
+}
+
+$('#sub-profundidad').addEventListener('input', (e) => {
+  $('#sub-profundidad-val').textContent = e.target.value;
+  if (!$('#sub-controls').hidden) cargarSubgrafo();
+});
+
+// ------------------------------------------------------ subgraph rendering
+
+const SG_RADIO = 18;
+const SG_PASO_X = 96;
+const SG_PASO_Y = 110;
+const SG_MARGEN = 24;
+
+function numeroEstado(id) {
+  const m = /^q(\d+)$/.exec(String(id ?? ''));
+  return m ? Number(m[1]) : 0;
+}
+
+// renderSubgrafo draws the BFS ball as an inline SVG: one row per distance,
+// nodes sorted numerically, straight edges with a labelled arrowhead.
+function renderSubgrafo(sg) {
+  const nodos = sg.nodos.slice().sort((a, b) => numeroEstado(a.id) - numeroEstado(b.id));
+  const aristas = (sg.aristas || []).slice().sort((a, b) => {
+    const desde = numeroEstado(a.desde) - numeroEstado(b.desde);
+    if (desde) return desde;
+    if (a.simbolo !== b.simbolo) return a.simbolo < b.simbolo ? -1 : 1;
+    return numeroEstado(a.hacia) - numeroEstado(b.hacia);
+  });
+
+  const filas = [];
+  for (const n of nodos) {
+    while (filas.length <= n.distancia) filas.push([]);
+    filas[n.distancia].push(n);
+  }
+
+  // A self-loop arcs above its node, so the first row needs extra headroom.
+  const primeraFila = new Set(filas[0].map((n) => n.id));
+  const extraArriba = aristas.some((a) => a.desde === a.hacia && primeraFila.has(a.desde)) ? 40 : 0;
+
+  const margen = SG_MARGEN + SG_RADIO;
+  const anchoFila = Math.max(0, ...filas.map((f) => (f.length - 1) * SG_PASO_X));
+  const ancho = anchoFila + 2 * margen;
+  const alto = extraArriba + (filas.length - 1) * SG_PASO_Y + 2 * margen;
+
+  const pos = new Map();
+  filas.forEach((fila, d) => {
+    const inicio = (ancho - (fila.length - 1) * SG_PASO_X) / 2;
+    fila.forEach((n, i) => {
+      pos.set(n.id, { x: inicio + i * SG_PASO_X, y: extraArriba + margen + d * SG_PASO_Y });
+    });
+  });
+
+  const partes = [];
+  partes.push(`<svg class="sg" viewBox="0 0 ${ancho} ${alto}" width="100%" role="img" aria-label="vecindad de ${esc(sg.centro)}">`);
+  partes.push(`<defs><marker id="sg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="sg-arrow-head"/></marker></defs>`);
+
+  const inicial = nodos.find((n) => n.inicial);
+  if (inicial) {
+    const p = pos.get(inicial.id);
+    const desde = Math.max(4, p.x - 50);
+    partes.push(`<line class="sg-inicio" x1="${desde}" y1="${p.y}" x2="${p.x - SG_RADIO - 4}" y2="${p.y}" marker-end="url(#sg-arrow)"/>`);
+  }
+
+  for (const a of aristas) {
+    const p = pos.get(a.desde);
+    const q = pos.get(a.hacia);
+    if (!p || !q) continue;
+    if (a.desde === a.hacia) {
+      const d = `M ${p.x - 10} ${p.y - 16} C ${p.x - 28} ${p.y - 48}, ${p.x + 28} ${p.y - 48}, ${p.x + 10} ${p.y - 16}`;
+      partes.push(`<path class="sg-edge" d="${d}" marker-end="url(#sg-arrow)"/>`);
+      partes.push(etiquetaSimbolo(p.x, p.y - 50, a.simbolo));
+      continue;
+    }
+    const dx = q.x - p.x;
+    const dy = q.y - p.y;
+    const largo = Math.hypot(dx, dy) || 1;
+    const ux = dx / largo;
+    const uy = dy / largo;
+    const x1 = p.x + ux * (SG_RADIO + 1);
+    const y1 = p.y + uy * (SG_RADIO + 1);
+    const x2 = q.x - ux * (SG_RADIO + 5);
+    const y2 = q.y - uy * (SG_RADIO + 5);
+    partes.push(`<line class="sg-edge" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#sg-arrow)"/>`);
+    partes.push(etiquetaSimbolo((x1 + x2) / 2, (y1 + y2) / 2, a.simbolo));
+  }
+
+  for (const n of nodos) {
+    const p = pos.get(n.id);
+    const clases = `sg-node${n.aceptor ? ' aceptor' : ''}${n.id === sg.centro ? ' centro' : ''}`;
+    partes.push(`<g class="${clases}" data-id="${esc(n.id)}" transform="translate(${p.x} ${p.y})">`);
+    partes.push(`<circle r="${SG_RADIO}"/>`);
+    if (n.aceptor) partes.push(`<circle r="${SG_RADIO - 4}" class="interno"/>`);
+    const tam = n.id.length > 3 ? 9 : 12;
+    partes.push(`<text style="font-size:${tam}px">${esc(n.id)}</text>`);
+    partes.push(`</g>`);
+  }
+
+  partes.push('</svg>');
+  return partes.join('');
+}
+
+// etiquetaSimbolo keeps the edge label legible over the line with a white rect.
+function etiquetaSimbolo(x, y, simbolo) {
+  const texto = String(simbolo ?? '');
+  const ancho = texto.length * 7 + 8;
+  return `<g class="sg-etiqueta">
+    <rect x="${x - ancho / 2}" y="${y - 9}" width="${ancho}" height="18" rx="4"/>
+    <text x="${x}" y="${y}">${esc(texto)}</text>
+  </g>`;
 }
 
 function renderTransiciones(datos) {

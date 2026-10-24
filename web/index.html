@@ -30,17 +30,37 @@
       <div class="seg" id="tipo-seg">
         <button data-tipo="email" aria-pressed="false">Correo</button>
         <button data-tipo="password" aria-pressed="true">Contraseña</button>
+        <button data-tipo="par" aria-pressed="false">Par</button>
       </div>
 
-      <div class="row">
-        <div class="grow">
-          <input id="valor" class="mono" type="text" autocomplete="off" spellcheck="false"
-                 placeholder="Escribí una contraseña o un correo">
+      <div id="simple-campos">
+        <div class="row">
+          <div class="grow">
+            <input id="valor" class="mono" type="text" autocomplete="off" spellcheck="false"
+                   placeholder="Escribí una contraseña o un correo">
+          </div>
+          <button class="ghost" id="ver" title="Mostrar u ocultar">ocultar</button>
+          <button class="primary" id="validar">Validar</button>
         </div>
-        <button class="ghost" id="ver" title="Mostrar u ocultar">ocultar</button>
-        <button class="primary" id="validar">Validar</button>
+        <div class="meta" id="hint">Los espacios se ignoran. Enter también valida.</div>
       </div>
-      <div class="meta" id="hint">Los espacios se ignoran. Enter también valida.</div>
+
+      <div id="par-campos" hidden>
+        <div class="row">
+          <div class="grow">
+            <input id="par-email" class="mono" type="text" autocomplete="off" spellcheck="false"
+                   placeholder="Correo del par">
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div class="grow">
+            <input id="par-pass" class="mono" type="text" autocomplete="off" spellcheck="false"
+                   placeholder="Contraseña del par">
+          </div>
+          <button class="primary" id="validar-par">Validar par</button>
+        </div>
+        <div class="meta">Se validan las dos credenciales y se muestra un veredicto conjunto. Enter también valida.</div>
+      </div>
     </div>
 
     <div id="reporte"></div>
@@ -99,6 +119,11 @@
             <button data-vista="sub" aria-pressed="true">Subconjuntos</button>
             <button data-vista="tree" aria-pressed="false">Árbol</button>
             <button data-vista="min" aria-pressed="false">Mínimo</button>
+          </div>
+          <div class="sub-controls" id="sub-controls" hidden>
+            <label for="sub-profundidad">profundidad <b id="sub-profundidad-val">2</b></label>
+            <input id="sub-profundidad" type="range" min="1" max="3" value="2">
+            <span id="sub-info"></span>
           </div>
           <div id="explorador-grafo"><div class="empty">Elegí una regla en la barra.</div></div>
         </div>

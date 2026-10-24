@@ -463,8 +463,11 @@ el validador.
 
 ### 9.1 Arquitectura
 
-Un único binario en Go, sin dependencias externas, que sirve su propio frontend embebido
-con `//go:embed`. El frontend es HTML, CSS y JavaScript sin paso de compilación.
+Un único binario en Go que sirve su propio frontend embebido con `//go:embed`. El frontend
+es HTML, CSS y JavaScript sin paso de compilación. El motor de autómatas no usa ninguna
+biblioteca externa: la única dependencia del proyecto es `webview`, opcional, aislada
+detrás de la etiqueta de compilación `gui`, y sólo existe para abrir la ventana propia del
+escritorio (ADR 0006).
 
 | Paquete | Responsabilidad |
 |---|---|

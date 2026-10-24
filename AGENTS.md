@@ -12,7 +12,8 @@ Instructions for AI agents working in this repository.
 ## Hard rules
 
 - `make check` must pass before any commit. It is Go-only and non-interactive.
-- No external Go dependencies. A new one needs an ADR under `docs/adr/`.
+- No external Go dependencies. A new one needs an ADR under `docs/adr/`. The only
+  exception on record is `webview_go`, optional and behind the `gui` tag (ADR 0006).
 - Rule ids are frozen: `P0..P8`, `C0..C6`, `C*`. Do not invent or renumber.
 - JSON keys and UI strings in Spanish; code, comments and commits in English.
 - Determinism: sorted slices, no map iteration in construction or in the walk, every draw

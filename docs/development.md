@@ -81,7 +81,8 @@ sudo apt install libgtk-3-dev libwebkit2gtk-4.1-dev gcc-mingw-w64-x86-64  # Debi
 - Package names, identifiers and comments in English. UI strings and JSON keys in Spanish.
 - Table-driven tests; every rule has at least one accept and one reject case.
 - Sorted slices instead of maps wherever iteration order can reach output.
-- No external Go dependencies without an ADR.
+- No external Go dependencies without an ADR. The one on record is `webview_go`, optional
+  and behind the `gui` tag (ADR 0006).
 
 ## Seeded demo values
 

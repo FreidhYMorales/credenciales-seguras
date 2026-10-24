@@ -17,13 +17,15 @@ Source of truth for scope: `docs/plans/app-credenciales/plan.md`.
 | Graph rendering | Graphviz `dot` at build time, SVG embedded | Windows demo machine may not have Graphviz |
 | Persistence | none | nothing to store, no accounts |
 | Tests | `go test` + RE2 differential oracle | Go's `regexp` is an independent implementation |
+| Desktop window | `webview/webview_go` behind the `gui` tag | the window is a viewer for the same local UI; WebView2/WebKitGTK, no frontend rewrite |
 
-No external Go module dependencies. A new dependency requires an ADR.
+One external Go dependency (`webview_go`, ADR 0006) and only in the optional `gui` build.
+Any other new dependency requires an ADR.
 
 ## Module boundaries
 
 ```
-cmd/app/            HTTP server, flags, wiring
+cmd/app/            HTTP server, flags, wiring; gui.go/nogui.go pick the entry point
 cmd/figgen/         build-time SVG generation (graphviz)
 cmd/pares/          regenerates testdata/pares.json through the same handlers
 internal/automata/  AST, Thompson, subset, tree/followpos, minimize, equivalence, DOT, simulate, toRE2

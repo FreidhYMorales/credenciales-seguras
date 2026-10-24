@@ -34,10 +34,11 @@ Entrega final: documento, capturas y los 20 pares en forma legible.
 | `capturas/` | las seis figuras del documento, tomadas del build actual | vigente |
 
 El paquete publicado está en
-<https://github.com/FreidhYMorales/credenciales-seguras/releases/latest>: los dos binarios,
-el zip, el PDF, el DOCX y `SHA256SUMS.txt`. `make entrega` arma `dist/credenciales-seguras.zip` con los dos binarios, el PDF, el
-`.docx` y un `LEEME.txt`; es el paquete que se sube. El `.docx` y el `.pdf` se generan con
-`make documento` (necesita `python-docx` y
+<https://github.com/FreidhYMorales/credenciales-seguras/releases/latest>: los cuatro
+binarios (con ventana y en navegador, Linux y Windows), el zip, el PDF, el DOCX y
+`SHA256SUMS.txt`. `make entrega` arma `dist/credenciales-seguras.zip` con los cuatro
+binarios, el PDF, el `.docx` y un `LEEME.txt`; es el paquete que se sube. El `.docx` y el
+`.pdf` se generan con `make documento` (necesita `python-docx` y
 LibreOffice; el resto del proyecto no). Ambos están versionados.
 
 `pares.md` se reescribe con `make pares-tabla` y la prueba `TestPairsMarkdownAlDia`

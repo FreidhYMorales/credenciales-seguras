@@ -10,14 +10,20 @@ el autómata (no sorteando cadenas al azar).
 ## Probar sin compilar
 
 1. Ir a la página de [releases](https://github.com/FreidhYMorales/credenciales-seguras/releases/latest)
-   y descargar `credenciales.exe` (Windows) o `credenciales-linux` (Linux x86-64).
-2. Ejecutarlo. Abre el servidor en <http://127.0.0.1:8080>; no hace falta Go, Python ni
-   ninguna otra dependencia: el binario lleva el frontend embebido.
+   y descargar `credenciales-gui.exe` (Windows) o `credenciales-gui-linux` (Linux x86-64).
+2. Ejecutarlo **sin argumentos**: abre su propia ventana, no hay que abrir el navegador ni
+   recordar un puerto. No hace falta Go, Python ni nada más: el binario lleva el frontend
+   embebido.
 3. En **Validar**, probar `abc` (falla P1, P2, P4 y P5) y `>nslx613LK2%|#PxFbA5` (válida,
    nivel Fuerte). En **Generar**, semilla `2026` y longitud 20 reproducen la misma
    contraseña y el mismo camino sobre el autómata.
 
-El paquete `credenciales-seguras.zip` de la misma release trae los dos binarios, el
+La ventana usa el motor web del sistema: WebView2 en Windows (viene con Edge; si faltara,
+la aplicación abre el navegador sola) y WebKitGTK en Linux (`webkit2gtk-4.1`). Si preferís
+el navegador, `credenciales.exe` y `credenciales-linux` hacen lo mismo sin ventana ni
+dependencias.
+
+El paquete `credenciales-seguras.zip` de la misma release trae los cuatro binarios, el
 documento final en PDF y en DOCX, y un `LEEME.txt`.
 
 > En Windows, el `.exe` está probado bajo Wine; si SmartScreen lo bloquea, es por ser un
@@ -26,13 +32,18 @@ documento final en PDF y en DOCX, y un `LEEME.txt`.
 ## Requisitos
 
 - Go 1.27 o superior (para compilar).
-- Nada más en tiempo de ejecución: el binario es estático y sirve su propio frontend.
+- En tiempo de ejecución, el binario sin ventana no necesita nada: es estático y sirve su
+  propio frontend. La versión con ventana usa el motor web del sistema (WebView2 o
+  WebKitGTK).
+- Para compilar la ventana: cgo, GTK3 + WebKitGTK 4.1 en Linux, y mingw-w64 para el `.exe`.
 
 ## Compilar y ejecutar
 
 ```sh
-make build            # bin/credenciales
-make run              # http://localhost:8080
+make app              # aplicación con ventana -> bin/credenciales-gui
+make app-windows      # la misma, para Windows -> bin/credenciales-gui.exe
+make build            # bin/credenciales  (modo navegador, sin cgo)
+make run              # modo navegador en http://localhost:8080
 make build-windows    # bin/credenciales.exe
 ```
 
@@ -45,7 +56,7 @@ make check            # gofmt + go vet + go test (la única puerta de calidad)
 ## Estructura
 
 ```
-cmd/app/            servidor HTTP
+cmd/app/            servidor HTTP y ventana nativa (build tag `gui`)
 internal/automata/  AFND-ε, subconjuntos, árbol, minimización, simulación, toRE2
 internal/rules/     las 15 reglas y sus autómatas
 internal/validate/  reporte por regla, normalización, nivel de seguridad

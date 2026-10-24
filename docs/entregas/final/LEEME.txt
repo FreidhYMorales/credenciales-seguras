@@ -7,25 +7,41 @@ Curso: Autómatas y Lenguajes Formales, Universidad Mariano Gálvez de Guatemala
 
 | Archivo | Qué es |
 |---|---|
-| `credenciales-linux` | ejecutable para Linux x86-64 |
-| `credenciales.exe` | ejecutable para Windows x86-64 |
+| `credenciales-gui.exe` | **Windows: la aplicación con ventana propia** (doble clic) |
+| `credenciales-gui` | Linux x86-64: la misma aplicación con ventana |
+| `credenciales.exe` | Windows, alternativa en el navegador (no necesita nada instalado) |
+| `credenciales-linux` | Linux x86-64, alternativa en el navegador |
 | `Credenciales_seguras.pdf` | documento final, 20 páginas |
 | `Credenciales_seguras.docx` | la misma fuente, editable |
 | `LEEME.txt` | este archivo |
 
 ## Cómo ejecutar
 
-No hay que instalar nada: el binario lleva el frontend embebido y no necesita Go ni
-Python.
+La aplicación abre su propia ventana; no hay que abrir el navegador ni recordar un
+puerto.
 
-```sh
-./credenciales-linux          # Linux; abre http://127.0.0.1:8080
-credenciales.exe              # Windows; doble clic o desde cmd
-./credenciales-linux -addr 127.0.0.1:9090   # otro puerto
+```
+credenciales-gui.exe        # Windows: doble clic, se abre la ventana
+./credenciales-gui          # Linux: se abre la ventana
 ```
 
-Después de arrancarlo, abrir <http://127.0.0.1:8080> en el navegador. Se puede apagar
-con Ctrl+C.
+En Linux la ventana usa WebKitGTK: si falta, hay que instalar `webkit2gtk-4.1` (Arch)
+o `libwebkit2gtk-4.1-0` (Debian/Ubuntu). La aplicación avisa y abre el navegador si no
+encuentra el motor.
+
+En Windows la ventana usa el runtime de WebView2, que viene con Edge en Windows 10 y 11.
+Si en esa máquina no estuviera, la aplicación abre el navegador en su lugar.
+
+Si se prefiere el navegador, los binarios sin ventana no necesitan nada instalado:
+
+```sh
+./credenciales-linux                          # Linux; sirve en http://127.0.0.1:8080
+credenciales.exe                              # Windows
+./credenciales-linux -addr 127.0.0.1:9090     # otro puerto
+```
+
+En ese modo hay que abrir <http://127.0.0.1:8080> y se apaga con Ctrl+C. Los cuatro
+binarios aceptan `-addr`.
 
 ## Valores de demostración
 

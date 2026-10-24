@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Credenciales seguras · validador léxico con autómatas</title>
+<link rel="icon" href="data:,">
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -36,10 +37,12 @@
       <div id="simple-campos">
         <div class="row">
           <div class="grow">
-            <input id="valor" class="mono" type="text" autocomplete="off" spellcheck="false"
-                   placeholder="Escribí una contraseña o un correo">
+            <input id="valor-pass" class="mono" type="password" autocomplete="off" spellcheck="false"
+                   placeholder="Escribí una contraseña">
+            <input id="valor-email" class="mono" type="text" autocomplete="off" spellcheck="false"
+                   placeholder="Escribí un correo" hidden>
           </div>
-          <button class="ghost" id="ver" title="Mostrar u ocultar">ocultar</button>
+          <button class="ghost" id="ver" title="Mostrar u ocultar">ver</button>
           <button class="primary" id="validar">Validar</button>
         </div>
         <div class="meta" id="hint">Los espacios se ignoran. Enter también valida.</div>

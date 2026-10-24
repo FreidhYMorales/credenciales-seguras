@@ -54,9 +54,23 @@ const state = {
 function showScreen(name) {
   $$('.screen').forEach((s) => s.classList.toggle('active', s.id === `screen-${name}`));
   $$('#tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.screen === name)));
-  if (name === 'explorador') loadReglas().then(renderSidebar);
-  if (name === 'reglas') loadReglas().then(renderReglas);
+  if (name === 'explorador') cargarReglas(renderSidebar, '#explorador-lista');
+  if (name === 'reglas') cargarReglas(renderReglas, '#reglas-tabla');
   if (name === 'pares') loadPares();
+}
+
+// cargarReglas paints the rule list, and on failure leaves a message with a
+// retry button. Without it a refused connection left "Cargando…" on screen
+// forever, with no hint of what happened.
+async function cargarReglas(render, selector) {
+  try {
+    await loadReglas();
+    render();
+  } catch (err) {
+    const cont = $(selector);
+    cont.innerHTML = `${errorBox(err)}<button class="ghost small" data-reintentar>Reintentar</button>`;
+    $('[data-reintentar]', cont).addEventListener('click', () => cargarReglas(render, selector));
+  }
 }
 
 // --------------------------------------------------------------- navegación
@@ -90,6 +104,9 @@ async function aplicarHash() {
   const id = resto[0] ? decodeURIComponent(resto[0]) : null;
   if (!id) return;
   await loadReglas().catch(() => {});
+  // If the list could not be loaded the sidebar already shows the error and a
+  // retry; selecting would wipe it and leave an empty view.
+  if (!state.reglas.length) return;
   if (state.regla && state.regla.id === id) return;
   selectRegla(id);
 }
@@ -100,26 +117,40 @@ $$('#tabs button').forEach((b) => b.addEventListener('click', () => irA(b.datase
 
 // ------------------------------------------------------------------ validar
 
+// campoActual is the field of the active mode. Email and password keep their
+// own value, so switching modes never shows one credential in the other's
+// field.
+function campoActual() {
+  return state.tipo === 'email' ? $('#valor-email') : $('#valor-pass');
+}
+
 function setTipo(tipo) {
   state.tipo = tipo;
   $$('#tipo-seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tipo === tipo)));
   const par = tipo === 'par';
   $('#simple-campos').hidden = par;
   $('#par-campos').hidden = !par;
-  if (!par) $('#valor').placeholder = tipo === 'password' ? 'Escribí una contraseña' : 'Escribí un correo';
+  if (par) return;
+
+  const email = tipo === 'email';
+  $('#valor-email').hidden = !email;
+  $('#valor-pass').hidden = email;
+  // The eye only makes sense on the password field.
+  $('#ver').hidden = email;
+  campoActual().focus();
 }
 
 $$('#tipo-seg button').forEach((b) => b.addEventListener('click', () => setTipo(b.dataset.tipo)));
 
 $('#ver').addEventListener('click', () => {
-  const input = $('#valor');
+  const input = $('#valor-pass');
   const hidden = input.type === 'password';
   input.type = hidden ? 'text' : 'password';
   $('#ver').textContent = hidden ? 'ocultar' : 'ver';
 });
 
 async function validar() {
-  const valor = $('#valor').value;
+  const valor = campoActual().value;
   const out = $('#reporte');
   if (!valor.trim()) {
     out.innerHTML = `<div class="card"><div class="empty">Escribí un valor para validar.</div></div>`;
@@ -207,14 +238,15 @@ function renderReporte(rep, original, titulo) {
     </div>
     ${normalizado}
     <table>
-      <thead><tr><th>Regla</th><th>Nombre</th><th></th><th>Detalle</th></tr></thead>
+      <thead><tr><th scope="col">Regla</th><th scope="col">Nombre</th><th scope="col"></th><th scope="col">Detalle</th></tr></thead>
       <tbody>${filas}</tbody>
     </table>
   </div>`;
 }
 
 $('#validar').addEventListener('click', validar);
-$('#valor').addEventListener('keydown', (e) => { if (e.key === 'Enter') validar(); });
+$('#valor-pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') validar(); });
+$('#valor-email').addEventListener('keydown', (e) => { if (e.key === 'Enter') validar(); });
 $('#validar-par').addEventListener('click', validarPar);
 $('#par-ver').addEventListener('click', () => {
   const input = $('#par-pass');
@@ -267,8 +299,8 @@ $('#generar').addEventListener('click', async () => {
     });
     $('#gen-validar').addEventListener('click', () => {
       setTipo(res.tipo === 'email' ? 'email' : 'password');
-      $('#valor').value = res.valor;
-      showScreen('validar');
+      campoActual().value = res.valor;
+      irA('validar');
       validar();
     });
     camino.innerHTML = renderCamino(res.camino);
@@ -601,7 +633,7 @@ function renderTransiciones(datos) {
     `<tr><td class="mono">${esc(t.desde)}</td><td class="mono">${esc(t.simbolo)}</td><td class="mono">${esc(t.hacia)}</td></tr>`
   ).join('');
   $('#explorador-tabla').innerHTML = `
-    <table><thead><tr><th>Desde</th><th>Símbolo</th><th>Hacia</th></tr></thead>
+    <table><thead><tr><th scope="col">Desde</th><th scope="col">Símbolo</th><th scope="col">Hacia</th></tr></thead>
     <tbody>${filas || '<tr><td colspan="3" class="empty">Sin transiciones.</td></tr>'}</tbody></table>`;
 
   const paginas = Math.max(1, Math.ceil(datos.total / datos.limite));
@@ -670,8 +702,8 @@ function renderReglas() {
     }).join('');
 
   cont.innerHTML = `<table>
-    <thead><tr><th>Id</th><th>Regla</th><th>Tipo</th><th>ER formal</th><th>Traducción RE2</th>
-      <th class="num">AFND / sub / árbol / mín</th><th></th></tr></thead>
+    <thead><tr><th scope="col">Id</th><th scope="col">Regla</th><th scope="col">Tipo</th><th scope="col">ER formal</th><th scope="col">Traducción RE2</th>
+      <th scope="col" class="num">AFND / sub / árbol / mín</th><th scope="col"></th></tr></thead>
     <tbody>${filas}</tbody></table>`;
 
   $$('#reglas-tabla .re2.clamp').forEach((el) => el.addEventListener('click', () => {
@@ -693,7 +725,8 @@ async function loadPares() {
     state.pares = await api('/api/pares');
     renderPares();
   } catch (err) {
-    cont.innerHTML = errorBox(err);
+    cont.innerHTML = `${errorBox(err)}<button class="ghost small" data-reintentar>Reintentar</button>`;
+    $('[data-reintentar]', cont).addEventListener('click', () => loadPares());
   }
 }
 
@@ -718,8 +751,8 @@ function renderPares() {
   }).join('');
 
   $('#pares-tabla').innerHTML = `<table>
-    <thead><tr><th>#</th><th>Correo</th><th></th><th>Contraseña</th><th></th>
-      <th>Regla fallida</th><th>Semillas</th><th></th></tr></thead>
+    <thead><tr><th scope="col">#</th><th scope="col">Correo</th><th scope="col"></th><th scope="col">Contraseña</th><th scope="col"></th>
+      <th scope="col">Regla fallida</th><th scope="col">Semillas</th><th scope="col"></th></tr></thead>
     <tbody>${filas}</tbody></table>`;
 
   $$('[data-pair]').forEach((b) => b.addEventListener('click', () => {

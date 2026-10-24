@@ -7,6 +7,22 @@ Valida correos (RFC 5322, subconjunto) y contraseñas (NIST SP 800-63B + CIS), i
 **qué regla exacta** falla, calcula el nivel de seguridad y genera credenciales caminando
 el autómata (no sorteando cadenas al azar).
 
+## Probar sin compilar
+
+1. Ir a la página de [releases](https://github.com/FreidhYMorales/credenciales-seguras/releases/latest)
+   y descargar `credenciales.exe` (Windows) o `credenciales-linux` (Linux x86-64).
+2. Ejecutarlo. Abre el servidor en <http://127.0.0.1:8080>; no hace falta Go, Python ni
+   ninguna otra dependencia: el binario lleva el frontend embebido.
+3. En **Validar**, probar `abc` (falla P1, P2, P4 y P5) y `>nslx613LK2%|#PxFbA5` (válida,
+   nivel Fuerte). En **Generar**, semilla `2026` y longitud 20 reproducen la misma
+   contraseña y el mismo camino sobre el autómata.
+
+El paquete `credenciales-seguras.zip` de la misma release trae los dos binarios, el
+documento final en PDF y en DOCX, y un `LEEME.txt`.
+
+> En Windows, el `.exe` está probado bajo Wine; si SmartScreen lo bloquea, es por ser un
+> ejecutable sin firma: «Más información» → «Ejecutar de todas formas».
+
 ## Requisitos
 
 - Go 1.27 o superior (para compilar).
@@ -46,6 +62,7 @@ docs/referencias/   enunciado y estándares de consulta
 
 | Archivo | Contenido |
 |---|---|
+| `docs/entregas/final/Credenciales_seguras.pdf` | documento final, 20 pp. |
 | `docs/architecture.md` | stack, límites entre módulos, puerta de calidad |
 | `docs/development.md` | comandos y convenciones |
 | `docs/api.md` | contrato de los endpoints |

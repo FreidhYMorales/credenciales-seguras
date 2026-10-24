@@ -1,0 +1,202 @@
+[
+  {
+    "id": 1,
+    "email": "IykLbhvynB@F.mT",
+    "password": ">nslx613LK2%|#PxFbA5",
+    "email_esperado": true,
+    "password_esperado": true,
+    "regla_fallida": null,
+    "seed_email": 4490,
+    "seed_password": 2026
+  },
+  {
+    "id": 2,
+    "email": "oJbKxhbAkQ@s.RC",
+    "password": "5k5\"*9k06T1=g[30kzL3",
+    "email_esperado": true,
+    "password_esperado": true,
+    "regla_fallida": null,
+    "seed_email": 4491,
+    "seed_password": 2027
+  },
+  {
+    "id": 3,
+    "email": "0RtXtuXs@r.tw",
+    "password": "s{`Rx0qa6uM2Q0om;88Y",
+    "email_esperado": true,
+    "password_esperado": true,
+    "regla_fallida": null,
+    "seed_email": 4492,
+    "seed_password": 2028
+  },
+  {
+    "id": 4,
+    "email": "OzKFbIwWcQj@y.Fb",
+    "password": ")AP<1[Np)8#189rkP>XG",
+    "email_esperado": true,
+    "password_esperado": true,
+    "regla_fallida": null,
+    "seed_email": 4493,
+    "seed_password": 2029
+  },
+  {
+    "id": 5,
+    "email": "bzKbbPAe@H.xq",
+    "password": "K#J=(#2n<S<O/088z:pm",
+    "email_esperado": true,
+    "password_esperado": true,
+    "regla_fallida": null,
+    "seed_email": 4494,
+    "seed_password": 2030
+  },
+  {
+    "id": 6,
+    "email": "dA4WFKM5USNTInChTydt@h.FF",
+    "password": "\\%=L5ak5bS0Vb1vm:yXW",
+    "email_esperado": true,
+    "password_esperado": true,
+    "regla_fallida": null,
+    "seed_email": 4495,
+    "seed_password": 2031
+  },
+  {
+    "id": 7,
+    "email": "czdnlBUwvZO@x.kV",
+    "password": "97r#<$^3kz3Bf!ifPd5~",
+    "email_esperado": true,
+    "password_esperado": true,
+    "regla_fallida": null,
+    "seed_email": 4496,
+    "seed_password": 2032
+  },
+  {
+    "id": 8,
+    "email": "fCkKwufDuCfAGxIVVVcDY@r.nh",
+    "password": "BM\"$1\\CKE=svT{30-43d",
+    "email_esperado": true,
+    "password_esperado": true,
+    "regla_fallida": null,
+    "seed_email": 4497,
+    "seed_password": 2033
+  },
+  {
+    "id": 9,
+    "email": "vAlNkVl@A.WV",
+    "password": "-I:9^7WGX4yt3|[Y7-79",
+    "email_esperado": true,
+    "password_esperado": true,
+    "regla_fallida": null,
+    "seed_email": 4498,
+    "seed_password": 2034
+  },
+  {
+    "id": 10,
+    "email": "VrvFoLu@r.yP",
+    "password": "11)x5\\8L0S3'-hPiP56+",
+    "email_esperado": true,
+    "password_esperado": true,
+    "regla_fallida": null,
+    "seed_email": 4499,
+    "seed_password": 2035
+  },
+  {
+    "id": 11,
+    "email": "ana.perez@correo.com",
+    "password": "Abc123!",
+    "email_esperado": true,
+    "password_esperado": false,
+    "regla_fallida": "P1",
+    "seed_email": null,
+    "seed_password": null
+  },
+  {
+    "id": 12,
+    "email": "ana.perez@correo.com",
+    "password": "Xk9mTq2vLw8RzQe4NbA",
+    "email_esperado": true,
+    "password_esperado": false,
+    "regla_fallida": "P5",
+    "seed_email": null,
+    "seed_password": null
+  },
+  {
+    "id": 13,
+    "email": "ana.perez@correo.com",
+    "password": "Xk$mTq#vLw@RzQe&NbA",
+    "email_esperado": true,
+    "password_esperado": false,
+    "regla_fallida": "P4",
+    "seed_email": null,
+    "seed_password": null
+  },
+  {
+    "id": 14,
+    "email": "ana.perez@correo.com",
+    "password": "xk9$mtq2#vlw8@rzqe4&",
+    "email_esperado": true,
+    "password_esperado": false,
+    "regla_fallida": "P2",
+    "seed_email": null,
+    "seed_password": null
+  },
+  {
+    "id": 15,
+    "email": "ana.perez@correo.com",
+    "password": "XK9$MTQ2#VLW8@RZQE4&",
+    "email_esperado": true,
+    "password_esperado": false,
+    "regla_fallida": "P3",
+    "seed_email": null,
+    "seed_password": null
+  },
+  {
+    "id": 16,
+    "email": "ana.perez@correo.com",
+    "password": "Xk9$mTq2#vLw8@RzQaaa",
+    "email_esperado": true,
+    "password_esperado": false,
+    "regla_fallida": "P6",
+    "seed_email": null,
+    "seed_password": null
+  },
+  {
+    "id": 17,
+    "email": "ana.perez@correo.com",
+    "password": "Xk9$mTq2#vLw8@RzQabcd",
+    "email_esperado": true,
+    "password_esperado": false,
+    "regla_fallida": "P7",
+    "seed_email": null,
+    "seed_password": null
+  },
+  {
+    "id": 18,
+    "email": "ana.perez@correo.com",
+    "password": "Xk9$mTq2#vLw8@password",
+    "email_esperado": true,
+    "password_esperado": false,
+    "regla_fallida": "P8",
+    "seed_email": null,
+    "seed_password": null
+  },
+  {
+    "id": 19,
+    "email": "ana..perez@correo.com",
+    "password": "Xk9$mTq2#vLw8@RzQe4&",
+    "email_esperado": false,
+    "password_esperado": true,
+    "regla_fallida": "C2",
+    "seed_email": null,
+    "seed_password": null
+  },
+  {
+    "id": 20,
+    "email": "ana.perez@correo.c",
+    "password": "Xk9$mTq2#vLw8@RzQe4&",
+    "email_esperado": false,
+    "password_esperado": true,
+    "regla_fallida": "C5",
+    "seed_email": null,
+    "seed_password": null
+  }
+]

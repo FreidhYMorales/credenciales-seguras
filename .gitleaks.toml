@@ -1,0 +1,11 @@
+# Gitleaks configuration.
+#
+# testdata/pares.json holds the 20 graded test pairs: 10 generated with the
+# seeds recorded next to them and 10 authored to be invalid on purpose. Those
+# strings are sample credentials, not secrets, and the file is meant to be
+# committed (a test regenerates it byte for byte). The generic-api-key rule
+# matches the deliberately weak password that lacks a special character.
+
+[[allowlists]]
+description = "graded sample credentials in testdata/pares.json"
+paths = ['''testdata/pares\.json''']

@@ -1,4 +1,5 @@
-// Command pares regenerates testdata/pares.json.
+// Command pares regenerates testdata/pares.json, or prints the same 20 pairs as
+// the Markdown tables of the final document.
 //
 // The 10 valid pairs come from the same generator the API uses, with recorded
 // seeds, so the file can be rebuilt byte for byte. The 10 invalid pairs are
@@ -10,6 +11,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 
@@ -17,6 +19,9 @@ import (
 )
 
 func main() {
+	md := flag.Bool("md", false, "imprime los pares como tablas Markdown en vez de escribir pares.json")
+	flag.Parse()
+
 	pairs, err := testdata.Build()
 	if err != nil {
 		log.Fatalf("construcción: %v", err)
@@ -24,6 +29,16 @@ func main() {
 	if err := testdata.Verify(pairs); err != nil {
 		log.Fatalf("verificación: %v", err)
 	}
+
+	if *md {
+		// The document includes this fragment, so it goes to stdout and never
+		// to the log, which would prefix every table with a timestamp.
+		if _, err := os.Stdout.Write(testdata.Markdown(pairs)); err != nil {
+			log.Fatalf("escritura: %v", err)
+		}
+		return
+	}
+
 	raw, err := testdata.Encode(pairs)
 	if err != nil {
 		log.Fatal(err)

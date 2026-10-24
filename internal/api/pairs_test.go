@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/FreidhYMorales/credenciales-seguras/internal/validate"
@@ -33,6 +34,27 @@ func TestPairsRegenerate(t *testing.T) {
 	if !bytes.Equal(stored, regenerated) {
 		t.Fatalf("pares.json does not regenerate byte for byte (stored %d bytes, rebuilt %d bytes)",
 			len(stored), len(regenerated))
+	}
+}
+
+// TestPairsMarkdownAlDia keeps the tables of the final document in step with
+// pares.json. `make pares-tabla` regenerates the file; this test fails when the
+// committed copy is stale, so the graded document cannot show a pair the code no
+// longer produces.
+func TestPairsMarkdownAlDia(t *testing.T) {
+	pairs, err := testdata.Build()
+	if err != nil {
+		t.Fatalf("build: %v", err)
+	}
+
+	const ruta = "../../docs/entregas/final/pares.md"
+	stored, err := os.ReadFile(ruta)
+	if err != nil {
+		t.Fatalf("%s: %v (correr make pares-tabla)", ruta, err)
+	}
+
+	if !bytes.Equal(stored, testdata.Markdown(pairs)) {
+		t.Fatalf("%s no coincide con pares.json (correr make pares-tabla)", ruta)
 	}
 }
 

@@ -2,7 +2,7 @@ GO ?= go
 BIN := bin/credenciales
 PYTHON ?= python3
 
-.PHONY: check check-oracle fmt test build build-windows run figures pairs
+.PHONY: check check-oracle fmt test build build-windows run figures pairs pares-tabla
 
 # Single quality gate: format check (no rewrite), lint, tests. Read-only,
 # non-interactive, Go-only. Never weaken a step to make it pass.
@@ -39,3 +39,9 @@ figures:
 # test fails if it does not regenerate byte for byte.
 pairs:
 	$(GO) run ./cmd/pares
+
+# Render the same 20 pairs as the Markdown tables the final document includes.
+# A test fails if the committed file drifts from pares.json.
+pares-tabla:
+	@mkdir -p docs/entregas/final
+	$(GO) run ./cmd/pares -md > docs/entregas/final/pares.md

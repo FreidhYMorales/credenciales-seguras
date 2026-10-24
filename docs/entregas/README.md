@@ -21,6 +21,20 @@ mínimo, anexo de pruebas y el criterio de nivel de seguridad (Anexo C).
 Los scripts de `codigo_avance/` que parchean el `.docx` apuntan a
 `docs/entregas/avance-1/Avance_1_completo.docx` y se ejecutan desde la raíz del repo.
 
-La entrega final (documento, video y presentación) todavía no tiene carpeta: se crea
-cuando exista el primer archivo. Lo que debe contener está en la sección
-*Definition of done* de `docs/plans/app-credenciales/plan.md`.
+## `final/`
+
+Entrega final: documento, capturas y los 20 pares en forma legible.
+
+| Archivo | Qué es | Estado |
+|---|---|---|
+| `documento.md` | documento final en Markdown, listo para exportar | borrador avanzado |
+| `pares.md` | las dos tablas de los 20 pares, generadas desde `pares.json` | generado |
+| `capturas/` | las seis figuras del documento, tomadas del build actual | vigente |
+
+`pares.md` se reescribe con `make pares-tabla` y la prueba `TestPairsMarkdownAlDia`
+falla si el archivo se desincroniza de `testdata/pares.json`. Las tablas están
+copiadas dentro de `documento.md`: si se regeneran, hay que volver a pegarlas.
+
+Lo que falta para cerrar la entrega (video de 1 minuto y presentación de 10 minutos)
+está en la sección *Definition of done* y en la *Run sheet* de
+`docs/plans/app-credenciales/plan.md`.

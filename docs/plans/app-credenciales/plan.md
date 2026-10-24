@@ -336,7 +336,9 @@ Each line states what it measures and, where a cut voids it, which one.
   `IykLbhvynB@F.mT`; Explorer shows 34/9/2 for P2 and simulates `Aa1!` [cut 4]; Rules
   lists 17 rows, 15 with ER [cut 3]; Pairs lists 20 rows [cut 5].
 - **Deliverables.** Document updated with test cases, the 20 pairs, steps 5-6 and
-  screenshots; video <= 1 minute; Linux and Windows binaries built.
+  screenshots; video <= 1 minute; Linux and Windows binaries built. The video is recorded
+  by a teammate against the frozen build: it is not the coder's task and it does not block
+  the document, the pairs or the binaries.
 
 ## Demo data
 

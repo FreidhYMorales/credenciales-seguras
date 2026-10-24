@@ -1,8 +1,13 @@
 GO ?= go
 BIN := bin/credenciales
+GUI := bin/credenciales-gui
 PYTHON ?= python3
+# Local pkg-config directory for the WebKitGTK alias (see gui-pc).
+GUI_PC := build/pkgconfig
+MINGW ?= x86_64-w64-mingw32-gcc
+MINGW_INCLUDE := build/mingw-include
 
-.PHONY: check check-oracle fmt test build build-windows run figures pairs pares-tabla documento entrega smoke-windows
+.PHONY: check check-oracle fmt test build build-windows run app app-windows gui-pc mingw-include figures pairs pares-tabla documento entrega smoke-windows smoke-windows-ventana
 
 # Single quality gate: format check (no rewrite), lint, tests. Read-only,
 # non-interactive, Go-only. Never weaken a step to make it pass.
@@ -31,6 +36,45 @@ build-windows:
 run: build
 	./$(BIN)
 
+# Native window. Linux builds WebKitGTK, Windows builds WebView2; both come from
+# webview_go and are behind the `gui` tag, so the plain binaries above stay
+# cgo-free and still run where no webview runtime is installed.
+app: gui-pc
+	PKG_CONFIG_PATH='$(abspath $(GUI_PC))' $(GO) build -tags gui -o $(GUI) ./cmd/app
+
+# Cross build needs mingw-w64 (extra/mingw-w64-gcc) and cgo. -H=windowsgui
+# hides the console: the window is the whole interface.
+app-windows: gui-pc mingw-include
+	CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=$(MINGW) CXX=x86_64-w64-mingw32-g++ \
+		CPATH='$(abspath $(MINGW_INCLUDE))' \
+		$(GO) build -tags gui -ldflags '-H=windowsgui -s -w' -o $(GUI).exe ./cmd/app
+
+# webview.cc includes "EventToken.h" in Windows SDK spelling, while mingw ships
+# it as eventtoken.h. CPATH is used instead of -I because the repository path
+# may contain spaces and CPATH is ':'-separated.
+mingw-include:
+	@mkdir -p $(MINGW_INCLUDE)
+	@printf '%s\n' '#pragma once' '#include <eventtoken.h>' > $(MINGW_INCLUDE)/EventToken.h
+
+# webview_go asks pkg-config for webkit2gtk-4.0, but current distributions ship
+# WebKitGTK 4.1 only. 4.1 is the same API with libsoup3, so a local alias .pc
+# that requires 4.1 is enough. Written only when 4.0 is genuinely missing.
+gui-pc:
+	@mkdir -p $(GUI_PC)
+	@if pkg-config --exists webkit2gtk-4.0; then \
+		rm -f $(GUI_PC)/webkit2gtk-4.0.pc; \
+	elif pkg-config --exists webkit2gtk-4.1; then \
+		printf '%s\n' \
+			'Name: webkit2gtk-4.0' \
+			'Description: alias of webkit2gtk-4.1 for webview_go' \
+			'Version: 4.1.0' \
+			'Requires: webkit2gtk-4.1' \
+			> $(GUI_PC)/webkit2gtk-4.0.pc; \
+	else \
+		echo "falta webkit2gtk: instalá webkit2gtk-4.1 (Arch) o libwebkit2gtk-4.1-dev (Debian/Ubuntu)"; \
+		exit 1; \
+	fi
+
 # Regenerate the embedded SVG figures. Needs Graphviz `dot`; the runtime does not.
 figures:
 	$(GO) run ./cmd/figgen
@@ -53,9 +97,11 @@ documento:
 
 # Pack what gets handed in: both binaries, the document and a readme. The
 # document is the committed one, so this does not need python-docx.
-entrega: build build-windows
+entrega: build build-windows app app-windows
 	@mkdir -p dist
 	rm -rf dist/entrega && mkdir -p dist/entrega
+	cp $(GUI) dist/entrega/credenciales-gui-linux
+	cp $(GUI).exe dist/entrega/credenciales-gui.exe
 	cp $(BIN) dist/entrega/credenciales-linux
 	cp $(BIN).exe dist/entrega/credenciales.exe
 	cp docs/entregas/final/Credenciales_seguras.pdf dist/entrega/
@@ -65,24 +111,13 @@ entrega: build build-windows
 	cd dist/entrega && zip -q ../credenciales-seguras.zip *
 	@ls -lh dist/credenciales-seguras.zip
 
-# Smoke test of the Windows binary under Wine: start it, wait for /api/salud,
+# Smoke test of the Windows binaries under Wine: start one, wait for /api/salud,
 # validate one credential, stop it. Kept out of `check`, which must stay
-# Go-only and non-interactive; this needs Wine, curl and a free port.
+# Go-only and non-interactive; these need Wine, curl and a free port.
 smoke-windows: build-windows
-	@command -v wine >/dev/null 2>&1 || { echo "falta wine"; exit 1; }
-	@command -v curl >/dev/null 2>&1 || { echo "falta curl"; exit 1; }
-	@puerto=8099; \
-	WINEDEBUG=-all wine $(BIN).exe -addr 127.0.0.1:$$puerto >/tmp/credenciales-wine.log 2>&1 & \
-	pid=$$!; \
-	trap 'kill $$pid 2>/dev/null' EXIT; \
-	for i in $$(seq 1 60); do \
-		curl -sf http://127.0.0.1:$$puerto/api/salud >/dev/null 2>&1 && break; \
-		sleep 0.5; \
-	done; \
-	curl -sf http://127.0.0.1:$$puerto/api/salud | grep -q '"estado":"ok"' \
-		|| { echo "el .exe no responde en /api/salud"; exit 1; }; \
-	curl -sf -X POST -H 'Content-Type: application/json' \
-		-d '{"tipo":"password","valor":"Xk9$$mTq2#vLw8@password"}' \
-		http://127.0.0.1:$$puerto/api/validar | grep -q '"valido":false' \
-		|| { echo "el .exe no valida"; exit 1; }; \
-	echo "ok: el .exe responde y valida bajo Wine (puerto $$puerto)"
+	@sh tools/smoke/wine.sh $(BIN).exe 8099
+
+# The window binary needs no display to be checked this way. Wine has no
+# WebView2 runtime, so this covers the HTTP layer and the browser fallback.
+smoke-windows-ventana: app-windows
+	@sh tools/smoke/wine.sh $(GUI).exe 8098

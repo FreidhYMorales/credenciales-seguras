@@ -48,15 +48,18 @@
       <div id="par-campos" hidden>
         <div class="row">
           <div class="grow">
+            <h3>Correo</h3>
             <input id="par-email" class="mono" type="text" autocomplete="off" spellcheck="false"
                    placeholder="Correo del par">
           </div>
         </div>
-        <div class="row" style="margin-top:10px">
+        <div class="row" style="margin-top:10px; align-items:flex-end">
           <div class="grow">
-            <input id="par-pass" class="mono" type="text" autocomplete="off" spellcheck="false"
+            <h3>Contraseña</h3>
+            <input id="par-pass" class="mono" type="password" autocomplete="off" spellcheck="false"
                    placeholder="Contraseña del par">
           </div>
+          <button class="ghost" id="par-ver" title="Mostrar u ocultar">ver</button>
           <button class="primary" id="validar-par">Validar par</button>
         </div>
         <div class="meta">Se validan las dos credenciales y se muestra un veredicto conjunto. Enter también valida.</div>

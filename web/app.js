@@ -124,13 +124,15 @@ async function validarPar() {
         <span>${esc(detalle)}</span>
       </div>
     </div>`;
-    out.innerHTML = veredicto + renderReporte(repEmail, email) + renderReporte(repPass, pass);
+    out.innerHTML = veredicto
+      + renderReporte(repEmail, email, 'Correo')
+      + renderReporte(repPass, pass, 'Contraseña');
   } catch (err) {
     out.innerHTML = `<div class="card">${errorBox(err)}</div>`;
   }
 }
 
-function renderReporte(rep, original) {
+function renderReporte(rep, original, titulo) {
   const pill = rep.valido ? 'ok' : 'bad';
   const etiqueta = rep.valido ? 'VÁLIDA' : 'INVÁLIDA';
   const fallas = rep.reglas.filter((r) => r.evaluado && !r.ok).length;
@@ -160,6 +162,7 @@ function renderReporte(rep, original) {
     : '';
 
   return `<div class="card">
+    ${titulo ? `<h2>${esc(titulo)}</h2>` : ''}
     <div class="verdict">
       <span class="pill ${pill}">${etiqueta}</span>
       <span>${esc(detalle)}</span>
@@ -176,6 +179,12 @@ function renderReporte(rep, original) {
 $('#validar').addEventListener('click', validar);
 $('#valor').addEventListener('keydown', (e) => { if (e.key === 'Enter') validar(); });
 $('#validar-par').addEventListener('click', validarPar);
+$('#par-ver').addEventListener('click', () => {
+  const input = $('#par-pass');
+  const oculto = input.type === 'password';
+  input.type = oculto ? 'text' : 'password';
+  $('#par-ver').textContent = oculto ? 'ocultar' : 'ver';
+});
 $('#par-email').addEventListener('keydown', (e) => { if (e.key === 'Enter') validarPar(); });
 $('#par-pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') validarPar(); });
 
@@ -362,8 +371,11 @@ function mostrarSubgrafo(sg) {
     return;
   }
   caja.innerHTML = `<div class="graph">${renderSubgrafo(sg)}</div>`;
+  const arbol = sg.aristas_totales > sg.aristas.length
+    ? ` · árbol de ${sg.aristas.length} de ${sg.aristas_totales} aristas`
+    : '';
   $('#sub-info').textContent =
-    `vecindad de ${sg.centro} · ${sg.nodos.length} de ${sg.total_nodos} estados${sg.truncado ? ' · truncada' : ''}`;
+    `vecindad de ${sg.centro} · ${sg.nodos.length} de ${sg.total_nodos} estados${arbol}${sg.truncado ? ' · truncada' : ''}`;
 
   $$('#explorador-grafo .sg-node').forEach((el) => el.addEventListener('click', () => {
     if (el.dataset.id === sg.centro) return;
@@ -379,93 +391,155 @@ $('#sub-profundidad').addEventListener('input', (e) => {
 
 // ------------------------------------------------------ subgraph rendering
 
-const SG_RADIO = 18;
-const SG_PASO_X = 96;
-const SG_PASO_Y = 110;
-const SG_MARGEN = 24;
+const SG_RADIO = 20;
+const SG_ANILLO = 115; // distance between BFS rings
+const SG_MARGEN = 46;
 
 function numeroEstado(id) {
   const m = /^q(\d+)$/.exec(String(id ?? ''));
   return m ? Number(m[1]) : 0;
 }
 
-// renderSubgrafo draws the BFS ball as an inline SVG: one row per distance,
-// nodes sorted numerically, straight edges with a labelled arrowhead.
+// renderSubgrafo draws the BFS ball as a radial tree: the centre at the origin,
+// one ring per distance, and each subtree inside its own angular sector so the
+// edges never cross. A layered grid was tried first and had to be scaled down to
+// fit the card, which made the labels unreadable.
 function renderSubgrafo(sg) {
   const nodos = sg.nodos.slice().sort((a, b) => numeroEstado(a.id) - numeroEstado(b.id));
-  const aristas = (sg.aristas || []).slice().sort((a, b) => {
-    const desde = numeroEstado(a.desde) - numeroEstado(b.desde);
-    if (desde) return desde;
-    if (a.simbolo !== b.simbolo) return a.simbolo < b.simbolo ? -1 : 1;
-    return numeroEstado(a.hacia) - numeroEstado(b.hacia);
-  });
+  const porId = new Map(nodos.map((n) => [n.id, n]));
 
-  const filas = [];
-  for (const n of nodos) {
-    while (filas.length <= n.distancia) filas.push([]);
-    filas[n.distancia].push(n);
+  // One parent edge per node: the edge that comes from the previous ring.
+  const padre = new Map();
+  for (const a of sg.aristas || []) {
+    if (a.hacia === sg.centro || a.desde === a.hacia) continue;
+    const n = porId.get(a.hacia);
+    const p = porId.get(a.desde);
+    if (!n || !p || p.distancia !== n.distancia - 1) continue;
+    if (!padre.has(a.hacia)) padre.set(a.hacia, a);
   }
 
-  // A self-loop arcs above its node, so the first row needs extra headroom.
-  const primeraFila = new Set(filas[0].map((n) => n.id));
-  const extraArriba = aristas.some((a) => a.desde === a.hacia && primeraFila.has(a.desde)) ? 40 : 0;
+  const hijos = new Map(nodos.map((n) => [n.id, []]));
+  for (const [id, a] of padre) {
+    if (hijos.has(a.desde)) hijos.get(a.desde).push(id);
+  }
+  for (const lista of hijos.values()) {
+    lista.sort((x, y) => numeroEstado(x) - numeroEstado(y));
+  }
 
-  const margen = SG_MARGEN + SG_RADIO;
-  const anchoFila = Math.max(0, ...filas.map((f) => (f.length - 1) * SG_PASO_X));
-  const ancho = anchoFila + 2 * margen;
-  const alto = extraArriba + (filas.length - 1) * SG_PASO_Y + 2 * margen;
+  // Subtree sizes decide how much of the parent's sector each child receives.
+  const tam = new Map();
+  const medir = (id) => {
+    let s = 1;
+    for (const c of hijos.get(id) || []) s += medir(c);
+    tam.set(id, s);
+    return s;
+  };
+  medir(sg.centro);
+
+  const angulo = new Map();
+  const repartir = (id, desde, hasta) => {
+    angulo.set(id, (desde + hasta) / 2);
+    const cs = hijos.get(id) || [];
+    if (!cs.length) return;
+    const total = cs.reduce((s, c) => s + tam.get(c), 0);
+    let a = desde;
+    for (const c of cs) {
+      const ancho = ((hasta - desde) * tam.get(c)) / total;
+      repartir(c, a, a + ancho);
+      a += ancho;
+    }
+  };
+  repartir(sg.centro, -Math.PI / 2, (3 * Math.PI) / 2);
 
   const pos = new Map();
-  filas.forEach((fila, d) => {
-    const inicio = (ancho - (fila.length - 1) * SG_PASO_X) / 2;
-    fila.forEach((n, i) => {
-      pos.set(n.id, { x: inicio + i * SG_PASO_X, y: extraArriba + margen + d * SG_PASO_Y });
-    });
-  });
+  let radioMax = 0;
+  for (const n of nodos) {
+    const a = angulo.get(n.id);
+    if (a === undefined) continue; // unreachable from the centre, should not happen
+    const r = n.distancia * SG_ANILLO;
+    radioMax = Math.max(radioMax, r);
+    pos.set(n.id, { x: r * Math.cos(a), y: r * Math.sin(a), a, r });
+  }
 
+  const lado = 2 * (radioMax + SG_MARGEN);
+  // A one-ring ball would sit tiny inside the card, so it is rendered at least
+  // this wide; the viewBox stays tight and the SVG scales up to fill it.
+  const mostrar = Math.max(lado, 560);
   const partes = [];
-  partes.push(`<svg class="sg" viewBox="0 0 ${ancho} ${alto}" width="100%" role="img" aria-label="vecindad de ${esc(sg.centro)}">`);
+  partes.push(`<svg class="sg" viewBox="${-lado / 2} ${-lado / 2} ${lado} ${lado}" width="${mostrar}" height="${mostrar}" role="img" aria-label="vecindad de ${esc(sg.centro)}">`);
   partes.push(`<defs><marker id="sg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="sg-arrow-head"/></marker></defs>`);
 
   const inicial = nodos.find((n) => n.inicial);
-  if (inicial) {
-    const p = pos.get(inicial.id);
-    const desde = Math.max(4, p.x - 50);
-    partes.push(`<line class="sg-inicio" x1="${desde}" y1="${p.y}" x2="${p.x - SG_RADIO - 4}" y2="${p.y}" marker-end="url(#sg-arrow)"/>`);
+  const pi = inicial && pos.get(inicial.id);
+  if (pi && pi.r === 0) {
+    // The centre has no ring to come from, so the start marker points at it
+    // horizontally, the usual way to mark an initial state.
+    partes.push(`<line class="sg-inicio" x1="${-SG_RADIO - 34}" y1="0" x2="${-SG_RADIO - 6}" y2="0" marker-end="url(#sg-arrow)"/>`);
+  } else if (pi) {
+    const desde = pi.r + SG_MARGEN - 12;
+    const hasta = pi.r + SG_RADIO + 5;
+    partes.push(`<line class="sg-inicio" x1="${desde * Math.cos(pi.a)}" y1="${desde * Math.sin(pi.a)}" x2="${hasta * Math.cos(pi.a)}" y2="${hasta * Math.sin(pi.a)}" marker-end="url(#sg-arrow)"/>`);
   }
 
-  for (const a of aristas) {
+  // Parallel edges share one line; their symbols stack across it. This keeps
+  // "q0 reaches q1 with L, l, N and S" visible instead of picking one label.
+  const pares = new Map();
+  for (const a of sg.aristas || []) {
+    if (a.desde === a.hacia) continue;
     const p = pos.get(a.desde);
     const q = pos.get(a.hacia);
     if (!p || !q) continue;
-    if (a.desde === a.hacia) {
-      const d = `M ${p.x - 10} ${p.y - 16} C ${p.x - 28} ${p.y - 48}, ${p.x + 28} ${p.y - 48}, ${p.x + 10} ${p.y - 16}`;
-      partes.push(`<path class="sg-edge" d="${d}" marker-end="url(#sg-arrow)"/>`);
-      partes.push(etiquetaSimbolo(p.x, p.y - 50, a.simbolo));
-      continue;
-    }
+    const clave = `${a.desde}->${a.hacia}`;
+    if (!pares.has(clave)) pares.set(clave, { p, q, simbolos: [] });
+    pares.get(clave).simbolos.push(a.simbolo);
+  }
+
+  for (const { p, q, simbolos } of pares.values()) {
     const dx = q.x - p.x;
     const dy = q.y - p.y;
     const largo = Math.hypot(dx, dy) || 1;
     const ux = dx / largo;
     const uy = dy / largo;
-    const x1 = p.x + ux * (SG_RADIO + 1);
-    const y1 = p.y + uy * (SG_RADIO + 1);
-    const x2 = q.x - ux * (SG_RADIO + 5);
-    const y2 = q.y - uy * (SG_RADIO + 5);
+    const x1 = p.x + ux * (SG_RADIO + 2);
+    const y1 = p.y + uy * (SG_RADIO + 2);
+    const x2 = q.x - ux * (SG_RADIO + 6);
+    const y2 = q.y - uy * (SG_RADIO + 6);
     partes.push(`<line class="sg-edge" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#sg-arrow)"/>`);
-    partes.push(etiquetaSimbolo((x1 + x2) / 2, (y1 + y2) / 2, a.simbolo));
+    const mx = x1 + (x2 - x1) * 0.55;
+    const my = y1 + (y2 - y1) * 0.55;
+    const nx = -uy;
+    const ny = ux;
+    simbolos.forEach((simbolo, i) => {
+      const corrimiento = ((simbolos.length - 1) / 2 - i) * 15;
+      partes.push(etiquetaSimbolo(mx + nx * corrimiento, my + ny * corrimiento, simbolo));
+    });
+  }
+
+  // Self loops sit outside the ring, away from the centre.
+  for (const a of sg.aristas || []) {
+    if (a.desde !== a.hacia) continue;
+    const p = pos.get(a.desde);
+    if (!p) continue;
+    const ux = Math.cos(p.a);
+    const uy = Math.sin(p.a);
+    const cx = p.x + ux * (SG_RADIO + 20);
+    const cy = p.y + uy * (SG_RADIO + 20);
+    const nx = -uy;
+    const ny = ux;
+    partes.push(`<path class="sg-edge" d="M ${p.x + nx * 10} ${p.y + ny * 10} Q ${cx + nx * 14} ${cy + ny * 14}, ${p.x - nx * 10} ${p.y - ny * 10}" marker-end="url(#sg-arrow)"/>`);
+    partes.push(etiquetaSimbolo(cx, cy, a.simbolo));
   }
 
   for (const n of nodos) {
     const p = pos.get(n.id);
+    if (!p) continue;
     const clases = `sg-node${n.aceptor ? ' aceptor' : ''}${n.id === sg.centro ? ' centro' : ''}`;
     partes.push(`<g class="${clases}" data-id="${esc(n.id)}" transform="translate(${p.x} ${p.y})">`);
     partes.push(`<circle r="${SG_RADIO}"/>`);
     if (n.aceptor) partes.push(`<circle r="${SG_RADIO - 4}" class="interno"/>`);
-    const tam = n.id.length > 3 ? 9 : 12;
+    const tam = n.id.length > 3 ? 10 : 13;
     partes.push(`<text style="font-size:${tam}px">${esc(n.id)}</text>`);
-    partes.push(`</g>`);
+    partes.push('</g>');
   }
 
   partes.push('</svg>');

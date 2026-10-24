@@ -86,7 +86,7 @@ h3 { font-size: 13px; margin: 0 0 8px; color: var(--muted); text-transform: uppe
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .grow { flex: 1; }
 
-input[type="text"], input[type="number"] {
+input[type="text"], input[type="number"], input[type="password"] {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--line);
@@ -196,7 +196,7 @@ tr.skipped td { color: var(--muted); }
 .sub-controls b { color: var(--ink); font-variant-numeric: tabular-nums; }
 .sub-controls input[type="range"] { flex: 0 0 150px; }
 
-.sg { display: block; width: 100%; height: auto; font-family: var(--mono); }
+.sg { display: block; height: auto; font-family: var(--mono); }
 .sg-edge, .sg-inicio { fill: none; stroke: var(--muted); stroke-width: 1.4; }
 .sg-inicio { stroke: var(--ok); }
 .sg-arrow-head { fill: var(--muted); }

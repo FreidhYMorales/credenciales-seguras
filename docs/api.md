@@ -121,10 +121,11 @@ neighborhood) and `centro` (state id, default `q0`).
     "nodos": [
       { "id": "q0", "inicial": true, "aceptor": false, "distancia": 0 }
     ],
-    "aristas": [          // only edges whose two endpoints are in nodos
+    "aristas": [          // see the tree rule below
       { "desde": "q0", "simbolo": "L", "hacia": "q7" }
     ],
-    "truncado": false,    // true when the 60-node cap cut the frontier
+    "aristas_totales": 12, // edges of the induced subgraph, drawn or not
+    "truncado": false,    // true when a cap cut the frontier
     "total_nodos": 65     // states in the whole view, for "9 de 65"
   },
   "transiciones": [       // the requested page
@@ -143,10 +144,16 @@ and the UI shows the counts plus the paginated table.
 that `transiciones` walks: `vista=nfa` follows every NFA transition, epsilon included
 (`simbolo: "ε"`), and the DFA views follow `Delta` per atom. `distancia` is the BFS level,
 `inicial`/`aceptor` come from the view's start and accept states, and `total_nodos` is the
-size of the whole view (`nfa`, `sub`, `tree` or `min`). The ball stops at 60 nodes and sets
-`truncado: true` when the next frontier would exceed the cap; each frontier is ordered by
-`(simbolo, hacia)` so two identical requests return byte-identical JSON. An unknown or
-out-of-range `centro` is a 400: `{"ok": false, "error": "centro desconocido: q9999"}`.
+size of the whole view (`nfa`, `sub`, `tree` or `min`). The ball stops at 60 nodes, takes at
+most 10 nodes per level, and sets `truncado: true` when a cap cuts the frontier; each
+frontier is ordered by `(simbolo, hacia)` so two identical requests return byte-identical
+JSON. An unknown or out-of-range `centro` is a 400:
+`{"ok": false, "error": "centro desconocido: q9999"}`.
+
+`aristas` is the induced subgraph when it has at most 60 edges; above that it is the
+breadth-first **unfolding** instead, one parent edge per node, because a wide automaton
+(P6 reaches 3481 edges among its first 60 states) is a hairball on screen.
+`aristas_totales` always reports the real count, so the UI can say how many are hidden.
 
 ## POST /api/simular
 

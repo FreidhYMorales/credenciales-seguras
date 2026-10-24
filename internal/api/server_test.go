@@ -188,3 +188,59 @@ func TestSubgrafo(t *testing.T) {
 		t.Errorf("subgrafo = %s, want null", raw)
 	}
 }
+
+// TestSubgrafoAncho covers the wide case: P6 has 59 outgoing edges from q0, so
+// the ball must cap each ring, keep growing from the nodes that made it, and
+// fall back to the unfolding instead of sending thousands of edges.
+func TestSubgrafoAncho(t *testing.T) {
+	type respuesta struct {
+		Datos struct {
+			Subgrafo struct {
+				Nodos []struct {
+					Distancia int `json:"distancia"`
+				} `json:"nodos"`
+				Aristas        []any `json:"aristas"`
+				AristasTotales int   `json:"aristas_totales"`
+				Truncado       bool  `json:"truncado"`
+			} `json:"subgrafo"`
+		} `json:"datos"`
+	}
+
+	pedir := func(t *testing.T, ruta string) respuesta {
+		t.Helper()
+		rec := httptest.NewRecorder()
+		New().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, ruta, nil))
+		if rec.Code != http.StatusOK {
+			t.Fatalf("%s: status = %d", ruta, rec.Code)
+		}
+		var got respuesta
+		if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+			t.Fatalf("invalid JSON: %v", err)
+		}
+		return got
+	}
+
+	uno := pedir(t, "/api/automatas/P6?vista=min&profundidad=1")
+	tres := pedir(t, "/api/automatas/P6?vista=min&profundidad=3")
+
+	if !uno.Datos.Subgrafo.Truncado {
+		t.Error("profundidad 1: truncado = false, want true (q0 has more children than the cap)")
+	}
+	if len(tres.Datos.Subgrafo.Nodos) <= len(uno.Datos.Subgrafo.Nodos) {
+		t.Errorf("profundidad 3 devolvió %d nodos, want más que los %d de profundidad 1",
+			len(tres.Datos.Subgrafo.Nodos), len(uno.Datos.Subgrafo.Nodos))
+	}
+	maximo := 0
+	for _, n := range tres.Datos.Subgrafo.Nodos {
+		if n.Distancia > maximo {
+			maximo = n.Distancia
+		}
+	}
+	if maximo != 3 {
+		t.Errorf("profundidad 3 llegó a distancia %d, want 3", maximo)
+	}
+	if len(tres.Datos.Subgrafo.Aristas) >= tres.Datos.Subgrafo.AristasTotales {
+		t.Errorf("aristas = %d, aristas_totales = %d; want the unfolding to hide some",
+			len(tres.Datos.Subgrafo.Aristas), tres.Datos.Subgrafo.AristasTotales)
+	}
+}

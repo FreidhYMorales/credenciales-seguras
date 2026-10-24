@@ -352,9 +352,15 @@ func viewSize(rule *rules.Rule, vista string) (int, int) {
 
 // ------------------------------------------------------------ subgrafo
 
-// maxSubgrafoNodos caps the neighborhood so a wide automaton cannot flood the
-// browser with a graph it cannot read.
-const maxSubgrafoNodos = 60
+// The neighborhood is drawn as a breadth-first unfolding: one parent edge per
+// node. Drawing every edge of the induced subgraph is unreadable for a wide
+// automaton (P6 has 3481 edges among its first 60 states), so a ball above
+// maxAristasDibujables falls back to the tree and only reports the count.
+const (
+	maxSubgrafoNodos     = 60 // hard cap on the whole ball
+	maxSubgrafoPorNivel  = 10 // keeps one row inside the card without shrinking it
+	maxAristasDibujables = 60 // above this, the ball is drawn as a tree
+)
 
 type subgrafoNodo struct {
 	ID        string `json:"id"`
@@ -370,16 +376,18 @@ type subgrafoArista struct {
 }
 
 type subgrafo struct {
-	Centro      string           `json:"centro"`
-	Profundidad int              `json:"profundidad"`
-	Nodos       []subgrafoNodo   `json:"nodos"`
-	Aristas     []subgrafoArista `json:"aristas"`
-	Truncado    bool             `json:"truncado"`
-	TotalNodos  int              `json:"total_nodos"`
+	Centro         string           `json:"centro"`
+	Profundidad    int              `json:"profundidad"`
+	Nodos          []subgrafoNodo   `json:"nodos"`
+	Aristas        []subgrafoArista `json:"aristas"`         // parent edge of every node but the centre
+	AristasTotales int              `json:"aristas_totales"` // edges of the induced subgraph
+	Truncado       bool             `json:"truncado"`
+	TotalNodos     int              `json:"total_nodos"`
 }
 
 // vecino is one outgoing edge of a view state.
 type vecino struct {
+	origen  int
 	simbolo string
 	hacia   int
 }
@@ -408,7 +416,7 @@ func grafoDe(rule *rules.Rule, vista string) (*vistaGrafo, error) {
 			if t.Chars == nil {
 				label = "ε"
 			}
-			g.salidas[t.From] = append(g.salidas[t.From], vecino{simbolo: label, hacia: t.To})
+			g.salidas[t.From] = append(g.salidas[t.From], vecino{origen: t.From, simbolo: label, hacia: t.To})
 		}
 		for _, vs := range g.salidas {
 			sortVecinos(vs)
@@ -432,7 +440,7 @@ func grafoDe(rule *rules.Rule, vista string) (*vistaGrafo, error) {
 			if t < 0 {
 				continue
 			}
-			g.salidas[q] = append(g.salidas[q], vecino{simbolo: automata.AtomLabel(d.Atoms[a]), hacia: t})
+			g.salidas[q] = append(g.salidas[q], vecino{origen: q, simbolo: automata.AtomLabel(d.Atoms[a]), hacia: t})
 		}
 		sortVecinos(g.salidas[q])
 	}
@@ -446,7 +454,10 @@ func sortVecinos(vs []vecino) {
 		if vs[i].simbolo != vs[j].simbolo {
 			return vs[i].simbolo < vs[j].simbolo
 		}
-		return vs[i].hacia < vs[j].hacia
+		if vs[i].hacia != vs[j].hacia {
+			return vs[i].hacia < vs[j].hacia
+		}
+		return vs[i].origen < vs[j].origen
 	})
 }
 
@@ -487,6 +498,10 @@ func neighborhood(rule *rules.Rule, vista, centro string, profundidad int) (*sub
 		}},
 	}
 
+	// padre[q] is the edge that discovered q, so the drawing has exactly one
+	// incoming edge per node and stays legible.
+	padre := make(map[int]subgrafoArista, maxSubgrafoNodos)
+
 	frontera := []int{inicio}
 	for d := 1; d <= profundidad && len(frontera) > 0; d++ {
 		candidatos := make([]vecino, 0, len(frontera))
@@ -496,15 +511,19 @@ func neighborhood(rule *rules.Rule, vista, centro string, profundidad int) (*sub
 		sortVecinos(candidatos)
 
 		siguiente := make([]int, 0, len(candidatos))
+		nivel := 0
+		lleno := false
 		for _, v := range candidatos {
 			if visto[v.hacia] {
 				continue
 			}
-			if len(sg.Nodos) >= maxSubgrafoNodos {
+			if nivel >= maxSubgrafoPorNivel || len(sg.Nodos) >= maxSubgrafoNodos {
 				sg.Truncado = true
+				lleno = len(sg.Nodos) >= maxSubgrafoNodos
 				break
 			}
 			visto[v.hacia] = true
+			nivel++
 			siguiente = append(siguiente, v.hacia)
 			sg.Nodos = append(sg.Nodos, subgrafoNodo{
 				ID:        "q" + strconv.Itoa(v.hacia),
@@ -512,26 +531,43 @@ func neighborhood(rule *rules.Rule, vista, centro string, profundidad int) (*sub
 				Aceptor:   g.aceptor[v.hacia],
 				Distancia: d,
 			})
+			padre[v.hacia] = subgrafoArista{
+				Desde:   "q" + strconv.Itoa(v.origen),
+				Simbolo: v.simbolo,
+				Hacia:   "q" + strconv.Itoa(v.hacia),
+			}
 		}
-		if sg.Truncado {
-			break
+		if lleno {
+			break // no room for another ring
 		}
+		// A capped level still lets the next one grow from the nodes that made
+		// it, so raising the depth keeps revealing structure.
 		frontera = siguiente
 	}
 
-	sg.Aristas = make([]subgrafoArista, 0, len(sg.Nodos))
+	sg.Aristas = make([]subgrafoArista, 0, len(sg.Nodos)-1)
+	todas := make([]subgrafoArista, 0, len(sg.Nodos))
 	for _, n := range sg.Nodos {
 		q, _ := estadoID(n.ID)
+		if a, ok := padre[q]; ok {
+			sg.Aristas = append(sg.Aristas, a)
+		}
 		for _, v := range g.salidas[q] {
 			if !visto[v.hacia] {
 				continue
 			}
-			sg.Aristas = append(sg.Aristas, subgrafoArista{
+			todas = append(todas, subgrafoArista{
 				Desde:   n.ID,
 				Simbolo: v.simbolo,
 				Hacia:   "q" + strconv.Itoa(v.hacia),
 			})
 		}
+	}
+	sg.AristasTotales = len(todas)
+	// A small ball is clearer with every edge; a wide one is a hairball, so it
+	// falls back to the unfolding. The count is always reported.
+	if len(todas) <= maxAristasDibujables {
+		sg.Aristas = todas
 	}
 	return sg, nil
 }

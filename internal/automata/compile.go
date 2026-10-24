@@ -2,10 +2,10 @@ package automata
 
 // Stats holds the four state counts the advance document prints for a rule.
 type Stats struct {
-	NFA    int
-	Subset int
-	Tree   int
-	Min    int
+	NFA    int `json:"nfa"`
+	Subset int `json:"sub"`
+	Tree   int `json:"tree"`
+	Min    int `json:"min"`
 }
 
 // Compiled bundles every view of one regular expression: the Thompson NFA, the

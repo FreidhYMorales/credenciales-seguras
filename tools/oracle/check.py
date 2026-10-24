@@ -146,7 +146,7 @@ def main() -> int:
             print(f"DISCREPANCIA {rid}: el motor Go no reporta conteos", file=sys.stderr)
             fallos += 1
             continue
-        obtenido = [obtenido["NFA"], obtenido["Subset"], obtenido["Tree"], obtenido["Min"]]
+        obtenido = [obtenido["nfa"], obtenido["sub"], obtenido["tree"], obtenido["min"]]
         if esperado != obtenido:
             print(f"DISCREPANCIA {rid}: conteos Python={esperado} Go={obtenido}", file=sys.stderr)
             fallos += 1

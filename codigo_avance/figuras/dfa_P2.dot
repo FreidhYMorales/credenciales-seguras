@@ -1,0 +1,10 @@
+digraph G{rankdir=LR;nodesep=.35;ranksep=.5;node[shape=circle,fontsize=11];edge[fontsize=11];
+
+_s[shape=point,width=.05];
+A[label="A\n{1,2,3,4,5}"];
+B[label="B\n{1,2,3,4,5,6,7,8,9,#}",shape=doublecircle];
+_s->A;
+A->A[label="N,S,l"];
+A->B[label="L"];
+B->B[label="L,N,S,l"];
+}

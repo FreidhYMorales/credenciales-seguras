@@ -1,0 +1,400 @@
+L
+L L
+L L L L N L S
+L L L L S S L L
+L L L S L L
+L L L S N l S L S
+L L N L
+L L N L l L L L N l S S l
+L L N S S L l
+L L N l L N S S S L l N S
+L L S
+L L S L N l N l
+L L S N L N L N S S
+L L S N L N l L l N L N l S
+L L S N N L l N l S
+L L S N N S N S N N S L
+L L S N S N
+L L S N l l l L
+L L S S
+L L S S N
+L L S S l N
+L L S l L l L S S l l L
+L L S l S L L S L N l l
+L L l N N L l N l L N
+L L l S
+L L l l L S N l L S S
+L N
+L N L L L S l S S S
+L N L L S
+L N L L S N S
+L N L S N N
+L N L l L S l
+L N L l N L l N
+L N N
+L N N L l S l S
+L N N S
+L N N S L N
+L N N S L N L N
+L N N S l N S l S L N
+L N N l
+L N N l N L l L l l
+L N N l l
+L N N l l S S N N N L N
+L N S
+L N S L N N N N S L L S
+L N S L S L S S l l S l S N
+L N S N S l
+L N S N l L S L S S S l l S
+L N S S S L L L N N N l
+L N S l
+L N S l N S S l
+L N S l N l l
+L N l L N
+L N l L l S l N N L l L L L
+L N l S N l S S N N N l
+L N l l S N S l S N l S N
+L N l l l l
+L S
+L S L
+L S L N L L
+L S L S N
+L S L l S S l N N
+L S N
+L S N L S l N L S N
+L S N N N l L N N L l N
+L S N l N l L S
+L S S
+L S S L l S S
+L S S N L
+L S S N N L S N S S L
+L S S N N N S
+L S S N N S L S l L S l N L
+L S S N N S l S N N N N
+L S S N l l S S S N S l
+L S S l L
+L S l
+L S l L N l
+L S l L N l N L N
+L S l l L L L
+L S l l N S S l S L l l
+L S l l S L L
+L S l l S L N S l N S
+L l
+L l L L S
+L l L N l S N
+L l L N l S S S S
+L l L S L S N
+L l L S l L l N N N N l
+L l L l L l S
+L l L l N L N S S N S S N S
+L l L l S l S l S S N N
+L l N N
+L l N S L L N N S L N
+L l S
+L l S N
+L l S N L N S N N S S L l L
+L l S N S L L l
+L l S N S L N S N
+L l S S S l N l N L N N
+L l S S l L l S l L S
+L l l L S N N N N L l l N
+L l l N S l S l
+L l l S L
+L l l S N l L N N l l L
+L l l S S N S L L S L
+L l l l N N L l L N l L N
+N
+N L
+N L L L
+N L L L N N
+N L L L S L L L l
+N L L N l N N l l l L
+N L L S S l
+N L L S l N l N l N L S S
+N L N L L
+N L N N L N L N
+N L N N N N N
+N L N N l L
+N L N S l S l S N L N N
+N L N l
+N L S N L N
+N L S N L S L L L N
+N L S N N L S N S S S
+N L S S L N l l
+N L l
+N L l N L L L L S
+N L l N S
+N L l S L L L N
+N L l l N N L
+N L l l l L L N
+N L l l l N S
+N L l l l S L N L l l N L
+N N
+N N L L N L S N l
+N N L N S N S N l
+N N L l
+N N L l L
+N N L l L S l N S N
+N N N S N l S S N S l L
+N N N l
+N N N l l N L L N l
+N N S L N
+N N S L S L l S N L N L l l
+N N S L l l S S l N N L S L
+N N S L l l S l l S N S
+N N S N L l S L l N
+N N S S L l L S l L
+N N S S l N N S l S l N N l
+N N l
+N N l N l N S
+N N l S N N N l S S L L l
+N N l l N N N
+N S
+N S L
+N S L N L N N L N
+N S L S S S N L l S S
+N S L l S l
+N S L l l L
+N S N L L S S L l N l S
+N S N L l
+N S N N L L L L L L l L
+N S N N S L
+N S N N l N N S S l N N S
+N S N l S S l S S N l
+N S S
+N S S N S L l S
+N S S S L
+N S S S l L
+N S l S L l S l L l S N
+N S l S S S l l l N
+N S l l L
+N S l l S N l l S S l
+N S l l l L L
+N l L L S N
+N l L L S l S N L L S L L N
+N l L N N l
+N l L S L L N S l L
+N l N N N L N L N N
+N l N N S
+N l N S S L L S L L l
+N l S L S N L N
+N l S L S N l N L N L N L
+N l S N
+N l S N L N S L
+N l S N N S S S N N L l
+N l S S l S l l l S L N N L
+N l S l l S L N N L l S S l
+N l l
+N l l L l N
+N l l N L S L l S l
+N l l N l l N L L l
+N l l l L N S
+N l l l l L l L L N L l L
+S
+S L
+S L L
+S L L L L N S N S S
+S L L L l L
+S L L N S l l l S l S S N l
+S L L S S L L N l L l S L
+S L N L N S L L N
+S L N N N l l S N N l l
+S L N S N
+S L N S l l l
+S L N l L l l N
+S L N l N L S l S
+S L S N L
+S L S N L N L N l
+S L S N N L S S S N
+S L S N N l S l
+S L S N l L S L l N N
+S L S N l L l N L l
+S L S S l
+S L S l L S L
+S L S l S l L
+S L S l l
+S L S l l N S l
+S L l L L S N l N
+S L l L S L S L L N
+S L l N S L S l N L
+S L l S
+S L l S L S
+S L l S N N l l L L
+S L l l L l L L L S L S L L
+S L l l N N
+S L l l N S L L L L S S
+S L l l S N S N S N S N
+S N
+S N L L S L L
+S N L N L l S N S L L
+S N L N S L l L N S l N S l
+S N L l L S N N N l S S
+S N L l L l L N l N S l
+S N N
+S N N L S S S S L
+S N N N L
+S N N S l S L N L
+S N N l S L l S N
+S N N l l N l L
+S N S L L
+S N S L L S N L l S N S N l
+S N S L N S l
+S N S L l N L
+S N S L l S L l
+S N S N S S S l l N S
+S N S S
+S N S l S l
+S N l L
+S N l L S l l
+S N l N L L l N S S
+S N l N N l N N
+S S
+S S L
+S S L L N N
+S S L L N l S l l N
+S S L L S L l l L S L
+S S L N L S N L l
+S S L N L S N l N
+S S N L N N L N S N N N l
+S S N L N S L S
+S S N L l l S l L L
+S S N N L L L N L l L N
+S S N N L L S N L
+S S N N l S S
+S S N l L l N
+S S N l S N S N S
+S S N l S l L l L l S l
+S S S L L S N
+S S S N N L L N L L N N
+S S S S l L N
+S S l N
+S S l N N N l N
+S S l S S L L S l
+S S l l L l l l
+S l
+S l L N
+S l L N N L N
+S l L S L N L
+S l L S N S
+S l L S N l S
+S l N
+S l N N L l
+S l N N l N N S L L N
+S l N S N N L S N
+S l N l N N N N S S l
+S l N l l L L l l l S
+S l S
+S l S L L l L L
+S l S L N L
+S l S L S N N S
+S l S N L S N S N N S l
+S l S l
+S l l
+S l l S L l
+l
+l L L
+l L L S N L l
+l L L S S S N
+l L L l
+l L L l L l L l N
+l L N L l l S S l N S N
+l L N N L N L l L N L S l N
+l L N l L l
+l L S
+l L S L L L
+l L S L S
+l L S N N N S l N N L N
+l L S N S S l l l N
+l L S S L l
+l L l
+l L l L N l S L N S S S
+l L l S L N S
+l N
+l N L
+l N L L N S S S L S N S
+l N L N
+l N L N L L
+l N L N L N
+l N L N S S l
+l N L S S
+l N L l N N
+l N L l S L l l
+l N N L N l L S l l l L L S
+l N N L S L N N l l N
+l N N L S L S
+l N N L l S
+l N N S L S l l N l l
+l N N S S N N N N N
+l N N l L l l N L S S
+l N S L N l L L N N S l
+l N S L S N S L l L N L N
+l N S S N L N L N N N
+l N S l S l L N S S
+l N l
+l N l L l L L N
+l N l N l L N L
+l N l S S
+l N l l N S L l N L S S N
+l N l l S N S l N
+l N l l S S S l l l
+l S
+l S L L L L N l l S l L
+l S L L N l L S N
+l S L L l S N l S
+l S L N S l L N l N
+l S L N S l L S
+l S L l
+l S N L N L N
+l S N L N l L
+l S N N N N N
+l S N N S L N N S l l N
+l S N N S S
+l S N N l N N N N l S S S
+l S N S N S L l S L S
+l S N S l S l S l S
+l S N l L S l L l S L l
+l S N l N L l l l L L l L L
+l S N l N S S
+l S N l S
+l S S
+l S S L S S l L L
+l S S L l l N l N
+l S S S L N S N N
+l S S S N S N S N L l N l S
+l S S l l l l L S L N l
+l S l
+l S l L S N N N L l L S
+l S l l L L L S L l L
+l S l l N L S l l N l N N L
+l l
+l l L L
+l l L L l L l N N L L L N
+l l L S S S l S S
+l l L S l L
+l l L l L
+l l N
+l l N N L L l
+l l N S l L L N S
+l l N l S N S N l L l l S L
+l l N l l L
+l l N l l S N l l L l N
+l l N l l l
+l l S L L L L l S L L L l
+l l S L S N l L l N N
+l l S L l L S l l L S
+l l S N
+l l S N S N L l S L
+l l S S N S N S N L
+l l S l N L N
+l l S l l N S
+l l l L
+l l l L l
+l l l L l L l L S l S l
+l l l N L N L L
+l l l N S
+l l l N l l l S S L
+l l l S
+l l l S L S L S
+l l l S L l N L l S l S
+l l l l L l N S l

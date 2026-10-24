@@ -1,0 +1,17 @@
+digraph G{rankdir=LR;nodesep=.25;ranksep=.35;node[shape=circle,fontsize=11,width=.4,fixedsize=true];edge[fontsize=11];
+labelloc=t;label="a | b";
+_s[shape=point,width=.05];
+q0[label="0"];
+q1[label="1",shape=doublecircle];
+q2[label="2"];
+q3[label="3"];
+q4[label="4"];
+q5[label="5"];
+_s->q0;
+q2->q3[label="a"];
+q4->q5[label="b"];
+q0->q2[label="ε"];
+q0->q4[label="ε"];
+q3->q1[label="ε"];
+q5->q1[label="ε"];
+}

@@ -1,0 +1,21 @@
+# Build output
+/bin/
+*.exe
+*.test
+*.out
+
+# Generated figures are committed (embedded at build time); keep them tracked.
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Local agent settings
+.claude/settings.local.json
+
+# Python oracle leftovers (the prototype lives in codigo_avance/)
+__pycache__/
+*.pyc
+.venv/

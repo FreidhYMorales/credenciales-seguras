@@ -1,0 +1,15 @@
+digraph G{rankdir=LR;nodesep=.35;ranksep=.5;node[shape=circle,fontsize=11];edge[fontsize=11];
+
+_s[shape=point,width=.05];
+A[label="A\n{1}"];
+B[label="B\n{2,3,#}",shape=doublecircle];
+C[label="C\n{4}"];
+D[label="D\n{3,5,#}",shape=doublecircle];
+_s->A;
+A->B[label="a"];
+B->B[label="a"];
+B->C[label="."];
+C->D[label="a"];
+D->D[label="a"];
+D->C[label="."];
+}

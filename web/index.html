@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Credenciales seguras · validador léxico con autómatas</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>Credenciales seguras</h1>
+    <span>validador léxico y generador sobre autómatas finitos</span>
+  </div>
+  <nav id="tabs" role="tablist">
+    <button role="tab" data-screen="validar" aria-selected="true">Validar</button>
+    <button role="tab" data-screen="generar" aria-selected="false">Generar</button>
+    <button role="tab" data-screen="explorador" aria-selected="false">Explorador</button>
+    <button role="tab" data-screen="reglas" aria-selected="false">Reglas</button>
+    <button role="tab" data-screen="pares" aria-selected="false">Pares de prueba</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ------------------------------------------------------- VALIDAR -->
+  <section class="screen active" id="screen-validar">
+    <div class="card">
+      <div class="seg" id="tipo-seg">
+        <button data-tipo="email" aria-pressed="false">Correo</button>
+        <button data-tipo="password" aria-pressed="true">Contraseña</button>
+      </div>
+
+      <div class="row">
+        <div class="grow">
+          <input id="valor" class="mono" type="text" autocomplete="off" spellcheck="false"
+                 placeholder="Escribí una contraseña o un correo">
+        </div>
+        <button class="ghost" id="ver" title="Mostrar u ocultar">ocultar</button>
+        <button class="primary" id="validar">Validar</button>
+      </div>
+      <div class="meta" id="hint">Los espacios se ignoran. Enter también valida.</div>
+    </div>
+
+    <div id="reporte"></div>
+  </section>
+
+  <!-- ------------------------------------------------------- GENERAR -->
+  <section class="screen" id="screen-generar">
+    <div class="two">
+      <div class="card">
+        <h2>Parámetros</h2>
+        <h3>Tipo</h3>
+        <div class="seg" id="gen-tipo">
+          <button data-tipo="password" aria-pressed="true">Contraseña</button>
+          <button data-tipo="email" aria-pressed="false">Correo</button>
+        </div>
+
+        <div id="gen-longitud-wrap">
+          <h3>Longitud <b id="gen-longitud-val">20</b></h3>
+          <input id="gen-longitud" type="range" min="15" max="64" value="20" style="width:100%">
+        </div>
+
+        <h3 style="margin-top:16px">Semilla</h3>
+        <input id="gen-semilla" class="mono" type="number" placeholder="vacío = aleatoria">
+        <div class="meta">La misma semilla reproduce el mismo valor y el mismo camino.</div>
+
+        <div class="row" style="margin-top:16px">
+          <button class="primary" id="generar">Generar</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" id="gen-resultado">
+          <div class="empty">Elegí los parámetros y presioná Generar.</div>
+        </div>
+        <div class="card">
+          <h2>Camino sobre el autómata</h2>
+          <div class="path" id="gen-camino"><span class="empty">Todavía no hay recorrido.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------- EXPLORADOR -->
+  <section class="screen" id="screen-explorador">
+    <div class="two">
+      <div class="card sidebar">
+        <h2>Reglas <span class="count">mín.</span></h2>
+        <div id="explorador-lista"><div class="empty">Cargando…</div></div>
+      </div>
+      <div>
+        <div class="card">
+          <h2 id="explorador-titulo">Elegí una regla</h2>
+          <div class="counts" id="explorador-conteos"></div>
+          <div class="seg" id="explorador-vistas">
+            <button data-vista="nfa" aria-pressed="false">AFND-ε</button>
+            <button data-vista="sub" aria-pressed="true">Subconjuntos</button>
+            <button data-vista="tree" aria-pressed="false">Árbol</button>
+            <button data-vista="min" aria-pressed="false">Mínimo</button>
+          </div>
+          <div id="explorador-grafo"><div class="empty">Elegí una regla en la barra.</div></div>
+        </div>
+
+        <div class="card">
+          <h2>Transiciones</h2>
+          <div id="explorador-tabla"><div class="empty">—</div></div>
+          <div class="pager" id="explorador-pager"></div>
+        </div>
+
+        <div class="card">
+          <h2>Simular</h2>
+          <div class="row">
+            <div class="grow"><input id="sim-valor" class="mono" type="text" placeholder="Cadena a recorrer" autocomplete="off"></div>
+            <button class="primary" id="simular">Recorrer</button>
+          </div>
+          <div class="path" id="sim-traza" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------- REGLAS -->
+  <section class="screen" id="screen-reglas">
+    <div class="card">
+      <div class="row" style="justify-content:space-between; margin-bottom:12px">
+        <h2 style="margin:0">Reglas, expresiones y fundamento</h2>
+        <div class="seg" id="reglas-filtro">
+          <button data-filtro="todas" aria-pressed="true">Todas</button>
+          <button data-filtro="password" aria-pressed="false">Contraseñas</button>
+          <button data-filtro="email" aria-pressed="false">Correos</button>
+        </div>
+      </div>
+      <div id="reglas-tabla"><div class="empty">Cargando…</div></div>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------- PARES -->
+  <section class="screen" id="screen-pares">
+    <div class="card">
+      <h2>20 pares de prueba</h2>
+      <div class="meta" style="margin-bottom:12px">
+        Los 10 válidos fueron generados por la herramienta con las semillas indicadas; los 10 inválidos
+        se redactaron a mano, cada uno con una sola credencial defectuosa.
+      </div>
+      <div id="pares-tabla"><div class="empty">Cargando…</div></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>Proyecto final · Autómatas y Lenguajes Formales</footer>
+<script src="/app.js"></script>
+</body>
+</html>

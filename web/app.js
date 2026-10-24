@@ -59,7 +59,44 @@ function showScreen(name) {
   if (name === 'pares') loadPares();
 }
 
-$$('#tabs button').forEach((b) => b.addEventListener('click', () => showScreen(b.dataset.screen)));
+// --------------------------------------------------------------- navegación
+
+// Every screen has a hash, and the automaton explorer carries the rule id:
+// #validar, #generar, #explorador, #explorador/P6, #reglas, #pares. That makes
+// a refresh land on the same screen and lets the run sheet jump straight to a
+// figure instead of clicking through the tab bar.
+
+const PANTALLAS = ['validar', 'generar', 'explorador', 'reglas', 'pares'];
+
+function leerHash() {
+  const partes = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+  const pantalla = PANTALLAS.includes(partes[0]) ? partes[0] : 'validar';
+  return { pantalla, resto: partes.slice(1) };
+}
+
+// irA renders the screen first and then records it in the hash, so a click is
+// never delayed by the navigation event.
+function irA(pantalla, ...resto) {
+  showScreen(pantalla);
+  const hash = `#${[pantalla, ...resto].filter(Boolean).join('/')}`;
+  if (location.hash !== hash) location.hash = hash;
+}
+
+async function aplicarHash() {
+  const { pantalla, resto } = leerHash();
+  showScreen(pantalla);
+  if (pantalla !== 'explorador') return;
+
+  const id = resto[0] ? decodeURIComponent(resto[0]) : null;
+  if (!id) return;
+  await loadReglas().catch(() => {});
+  if (state.regla && state.regla.id === id) return;
+  selectRegla(id);
+}
+
+window.addEventListener('hashchange', () => { aplicarHash(); });
+
+$$('#tabs button').forEach((b) => b.addEventListener('click', () => irA(b.dataset.screen)));
 
 // ------------------------------------------------------------------ validar
 
@@ -287,6 +324,9 @@ function selectRegla(id) {
   state.centro = null;
   renderSidebar();
   cargarVista();
+  // replaceState, not a hash assignment: switching automata is not a new place
+  // in the history, and it must not re-enter aplicarHash.
+  if (state.regla) history.replaceState(null, '', `#explorador/${id}`);
 }
 
 $$('#explorador-vistas button').forEach((b) => b.addEventListener('click', () => {
@@ -639,7 +679,7 @@ function renderReglas() {
   }));
 
   $$('[data-open]').forEach((b) => b.addEventListener('click', () => {
-    showScreen('explorador');
+    irA('explorador', b.dataset.open);
     selectRegla(b.dataset.open);
   }));
 }
@@ -685,10 +725,13 @@ function renderPares() {
   $$('[data-pair]').forEach((b) => b.addEventListener('click', () => {
     const p = state.pares.find((x) => String(x.id) === b.dataset.pair);
     if (!p) return;
-    showScreen('validar');
-    setTipo(p.password_esperado ? 'password' : 'email');
-    $('#valor').value = p.password_esperado ? p.password : p.email;
-    validar();
+    // A pair is validated as a pair: "probar" used to check only one half, so
+    // the joint verdict of the screen and the one in the document diverged.
+    irA('validar');
+    setTipo('par');
+    $('#par-email').value = p.email;
+    $('#par-pass').value = p.password;
+    validarPar();
   }));
 }
 
@@ -696,3 +739,6 @@ function renderPares() {
 
 setTipo('password');
 loadReglas().catch(() => {});
+// The hash decides the initial screen, so a refresh on #reglas or a shared
+// #explorador/P6 link opens exactly that.
+aplicarHash();

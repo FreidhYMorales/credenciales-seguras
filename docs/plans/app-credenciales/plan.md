@@ -387,6 +387,10 @@ Run sheet (targets 9:30, leaving 30 s of buffer under the 10-minute cap):
 
 Fallback: the 1-minute video plus a screenshot deck, opened before the demo starts.
 
+Deep links: every screen has a hash (`#validar`, `#generar`, `#explorador/P6`, `#reglas`,
+`#pares`), so the presenter can open a screen directly from the address bar and a refresh
+no longer resets the demo to Validate. `#explorador/<id>` also selects the automaton.
+
 Video storyboard (target 55-57 s, under the 60 s cap): 0-8 s invalid password and its
 failing rule; 8-20 s a valid pair from the Pairs table; 20-35 s generate with seed 2026
 and replay; 35-50 s Explorer with 34/9/2 and the trace; 50-56 s the repo and closing.

@@ -104,7 +104,8 @@ Same `semilla` plus same `tipo` and `longitud` returns the same `valor` and the 
 ## GET /api/automatas/{id}
 
 Query: `vista=nfa|sub|tree|min` (default `sub`), `pagina` (1-based, default 1),
-`limite` (default 50, max 200).
+`limite` (default 50, max 200), `profundidad` (1-3, clamped; absent or `0` means no
+neighborhood) and `centro` (state id, default `q0`).
 
 `datos`:
 
@@ -114,6 +115,18 @@ Query: `vista=nfa|sub|tree|min` (default `sub`), `pagina` (1-based, default 1),
   "vista": "nfa",
   "svg": "<svg…>",        // null when the view exceeds the drawing threshold
   "motivo": null,         // string when svg is null, e.g. "782 estados"
+  "subgrafo": {           // null when profundidad is absent or 0
+    "centro": "q0",
+    "profundidad": 2,
+    "nodos": [
+      { "id": "q0", "inicial": true, "aceptor": false, "distancia": 0 }
+    ],
+    "aristas": [          // only edges whose two endpoints are in nodos
+      { "desde": "q0", "simbolo": "L", "hacia": "q7" }
+    ],
+    "truncado": false,    // true when the 60-node cap cut the frontier
+    "total_nodos": 65     // states in the whole view, for "9 de 65"
+  },
   "transiciones": [       // the requested page
     { "desde": "q0", "simbolo": "L", "hacia": "q1" }
   ],
@@ -125,6 +138,15 @@ Query: `vista=nfa|sub|tree|min` (default `sub`), `pagina` (1-based, default 1),
 
 A view is drawn when it has **<= 40 states and <= 80 edges**; otherwise `svg` is `null`
 and the UI shows the counts plus the paginated table.
+
+`subgrafo` is the BFS ball of radius `profundidad` around `centro`, over the same graph
+that `transiciones` walks: `vista=nfa` follows every NFA transition, epsilon included
+(`simbolo: "ε"`), and the DFA views follow `Delta` per atom. `distancia` is the BFS level,
+`inicial`/`aceptor` come from the view's start and accept states, and `total_nodos` is the
+size of the whole view (`nfa`, `sub`, `tree` or `min`). The ball stops at 60 nodes and sets
+`truncado: true` when the next frontier would exceed the cap; each frontier is ordered by
+`(simbolo, hacia)` so two identical requests return byte-identical JSON. An unknown or
+out-of-range `centro` is a 400: `{"ok": false, "error": "centro desconocido: q9999"}`.
 
 ## POST /api/simular
 

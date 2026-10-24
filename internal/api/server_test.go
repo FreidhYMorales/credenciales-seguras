@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -96,5 +97,94 @@ func TestReglasConteosKeys(t *testing.T) {
 	}
 	if !encontrado {
 		t.Error("la regla P1 no aparece en /api/reglas")
+	}
+}
+
+// TestSubgrafo pins the BFS neighborhood served for views too large to draw.
+// P1/min is the flagship case: 65 states, no pre-generated SVG, so the browser
+// can only draw it from this payload.
+func TestSubgrafo(t *testing.T) {
+	type nodo struct {
+		ID        string `json:"id"`
+		Inicial   bool   `json:"inicial"`
+		Aceptor   bool   `json:"aceptor"`
+		Distancia int    `json:"distancia"`
+	}
+	type respuesta struct {
+		Ok    bool `json:"ok"`
+		Datos struct {
+			Subgrafo *struct {
+				Centro      string `json:"centro"`
+				Profundidad int    `json:"profundidad"`
+				Nodos       []nodo `json:"nodos"`
+				Truncado    bool   `json:"truncado"`
+				TotalNodos  int    `json:"total_nodos"`
+			} `json:"subgrafo"`
+		} `json:"datos"`
+	}
+
+	pedir := func(t *testing.T, ruta string) (int, []byte) {
+		t.Helper()
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, ruta, nil)
+		New().ServeHTTP(rec, req)
+		return rec.Code, rec.Body.Bytes()
+	}
+
+	const ruta = "/api/automatas/P1?vista=min&profundidad=1"
+	codigo, cuerpo := pedir(t, ruta)
+	if codigo != http.StatusOK {
+		t.Fatalf("status = %d, want %d (body %s)", codigo, http.StatusOK, cuerpo)
+	}
+
+	var got respuesta
+	if err := json.Unmarshal(cuerpo, &got); err != nil {
+		t.Fatalf("invalid JSON: %v (body %s)", err, cuerpo)
+	}
+	sg := got.Datos.Subgrafo
+	if sg == nil {
+		t.Fatal("subgrafo = null, want an object")
+	}
+	if sg.Centro != "q0" {
+		t.Errorf("centro = %q, want %q", sg.Centro, "q0")
+	}
+	if sg.Profundidad != 1 {
+		t.Errorf("profundidad = %d, want 1", sg.Profundidad)
+	}
+	if len(sg.Nodos) == 0 {
+		t.Fatal("subgrafo.nodos está vacío")
+	}
+	if p := sg.Nodos[0]; p.ID != "q0" || !p.Inicial || p.Distancia != 0 {
+		t.Errorf("primer nodo = %+v, want q0 inicial a distancia 0", p)
+	}
+	for _, n := range sg.Nodos {
+		if n.Distancia > 1 {
+			t.Errorf("%s: distancia = %d, want <= 1", n.ID, n.Distancia)
+		}
+	}
+	if sg.TotalNodos != 65 {
+		t.Errorf("total_nodos = %d, want 65", sg.TotalNodos)
+	}
+
+	// Determinism: the same request twice must return the same bytes.
+	if _, otro := pedir(t, ruta); !bytes.Equal(cuerpo, otro) {
+		t.Errorf("dos pedidos idénticos devolvieron cuerpos distintos")
+	}
+
+	// An unknown center is a malformed request.
+	if codigo, _ := pedir(t, "/api/automatas/P1?vista=min&profundidad=1&centro=q9999"); codigo != http.StatusBadRequest {
+		t.Errorf("centro desconocido: status = %d, want %d", codigo, http.StatusBadRequest)
+	}
+
+	// Without profundidad there is no neighborhood at all.
+	_, cuerpo = pedir(t, "/api/automatas/P1?vista=min")
+	var sinProfundidad struct {
+		Datos map[string]json.RawMessage `json:"datos"`
+	}
+	if err := json.Unmarshal(cuerpo, &sinProfundidad); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if raw := string(sinProfundidad.Datos["subgrafo"]); raw != "null" {
+		t.Errorf("subgrafo = %s, want null", raw)
 	}
 }

@@ -13,6 +13,7 @@ import (
 	"io/fs"
 	"math"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -225,6 +226,24 @@ func (s *Server) automata(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// profundidad is optional: absent or 0 means "no neighborhood". Any other
+	// value is clamped to the supported 1..3 range.
+	profundidad := intParam(r, "profundidad", 0)
+	if profundidad != 0 {
+		profundidad = max(1, min(profundidad, 3))
+	}
+	var sg *subgrafo
+	if profundidad > 0 {
+		centro := r.URL.Query().Get("centro")
+		if centro == "" {
+			centro = "q0"
+		}
+		if sg, err = neighborhood(rule, vista, centro, profundidad); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
+
 	start := (pagina - 1) * limite
 	if start > len(transiciones) {
 		start = len(transiciones)
@@ -239,6 +258,7 @@ func (s *Server) automata(w http.ResponseWriter, r *http.Request) {
 		"vista":        vista,
 		"svg":          svgFor(id, vista),
 		"motivo":       motivo(rule, vista),
+		"subgrafo":     sg,
 		"transiciones": transiciones[start:end],
 		"total":        total,
 		"pagina":       pagina,
@@ -328,6 +348,192 @@ func viewSize(rule *rules.Rule, vista string) (int, int) {
 		return 0, 0
 	}
 	return d.N, d.Edges()
+}
+
+// ------------------------------------------------------------ subgrafo
+
+// maxSubgrafoNodos caps the neighborhood so a wide automaton cannot flood the
+// browser with a graph it cannot read.
+const maxSubgrafoNodos = 60
+
+type subgrafoNodo struct {
+	ID        string `json:"id"`
+	Inicial   bool   `json:"inicial"`
+	Aceptor   bool   `json:"aceptor"`
+	Distancia int    `json:"distancia"`
+}
+
+type subgrafoArista struct {
+	Desde   string `json:"desde"`
+	Simbolo string `json:"simbolo"`
+	Hacia   string `json:"hacia"`
+}
+
+type subgrafo struct {
+	Centro      string           `json:"centro"`
+	Profundidad int              `json:"profundidad"`
+	Nodos       []subgrafoNodo   `json:"nodos"`
+	Aristas     []subgrafoArista `json:"aristas"`
+	Truncado    bool             `json:"truncado"`
+	TotalNodos  int              `json:"total_nodos"`
+}
+
+// vecino is one outgoing edge of a view state.
+type vecino struct {
+	simbolo string
+	hacia   int
+}
+
+// vistaGrafo is the uniform view of one automaton that the BFS walks, so the
+// NFA and the three DFA views share the same neighborhood code.
+type vistaGrafo struct {
+	n       int
+	inicial int
+	aceptor []bool
+	salidas [][]vecino
+}
+
+func grafoDe(rule *rules.Rule, vista string) (*vistaGrafo, error) {
+	if vista == "nfa" {
+		nfa := rule.NFA
+		g := &vistaGrafo{
+			n:       nfa.N,
+			inicial: nfa.Start,
+			aceptor: make([]bool, nfa.N),
+			salidas: make([][]vecino, nfa.N),
+		}
+		g.aceptor[nfa.Accept] = true
+		for _, t := range nfa.Trans {
+			label := t.Name
+			if t.Chars == nil {
+				label = "ε"
+			}
+			g.salidas[t.From] = append(g.salidas[t.From], vecino{simbolo: label, hacia: t.To})
+		}
+		for _, vs := range g.salidas {
+			sortVecinos(vs)
+		}
+		return g, nil
+	}
+
+	d, err := viewDFA(rule, vista)
+	if err != nil {
+		return nil, err
+	}
+	g := &vistaGrafo{
+		n:       d.N,
+		inicial: d.Start,
+		aceptor: d.Accept,
+		salidas: make([][]vecino, d.N),
+	}
+	for q := 0; q < d.N; q++ {
+		for a := range d.Atoms {
+			t := d.Delta[q][a]
+			if t < 0 {
+				continue
+			}
+			g.salidas[q] = append(g.salidas[q], vecino{simbolo: automata.AtomLabel(d.Atoms[a]), hacia: t})
+		}
+		sortVecinos(g.salidas[q])
+	}
+	return g, nil
+}
+
+// sortVecinos orders a state's edges by (symbol, target) so two identical
+// requests visit the frontier in the same order.
+func sortVecinos(vs []vecino) {
+	sort.SliceStable(vs, func(i, j int) bool {
+		if vs[i].simbolo != vs[j].simbolo {
+			return vs[i].simbolo < vs[j].simbolo
+		}
+		return vs[i].hacia < vs[j].hacia
+	})
+}
+
+// estadoID parses a state id of the form "q<number>".
+func estadoID(s string) (int, bool) {
+	if !strings.HasPrefix(s, "q") {
+		return 0, false
+	}
+	n, err := strconv.Atoi(strings.TrimPrefix(s, "q"))
+	if err != nil || n < 0 {
+		return 0, false
+	}
+	return n, true
+}
+
+// neighborhood returns the BFS ball of radius profundidad around centro.
+func neighborhood(rule *rules.Rule, vista, centro string, profundidad int) (*subgrafo, error) {
+	g, err := grafoDe(rule, vista)
+	if err != nil {
+		return nil, err
+	}
+	inicio, ok := estadoID(centro)
+	if !ok || inicio >= g.n {
+		return nil, errors.New("centro desconocido: " + centro)
+	}
+
+	visto := make([]bool, g.n)
+	visto[inicio] = true
+	sg := &subgrafo{
+		Centro:      "q" + strconv.Itoa(inicio),
+		Profundidad: profundidad,
+		TotalNodos:  g.n,
+		Nodos: []subgrafoNodo{{
+			ID:        "q" + strconv.Itoa(inicio),
+			Inicial:   g.inicial == inicio,
+			Aceptor:   g.aceptor[inicio],
+			Distancia: 0,
+		}},
+	}
+
+	frontera := []int{inicio}
+	for d := 1; d <= profundidad && len(frontera) > 0; d++ {
+		candidatos := make([]vecino, 0, len(frontera))
+		for _, q := range frontera {
+			candidatos = append(candidatos, g.salidas[q]...)
+		}
+		sortVecinos(candidatos)
+
+		siguiente := make([]int, 0, len(candidatos))
+		for _, v := range candidatos {
+			if visto[v.hacia] {
+				continue
+			}
+			if len(sg.Nodos) >= maxSubgrafoNodos {
+				sg.Truncado = true
+				break
+			}
+			visto[v.hacia] = true
+			siguiente = append(siguiente, v.hacia)
+			sg.Nodos = append(sg.Nodos, subgrafoNodo{
+				ID:        "q" + strconv.Itoa(v.hacia),
+				Inicial:   g.inicial == v.hacia,
+				Aceptor:   g.aceptor[v.hacia],
+				Distancia: d,
+			})
+		}
+		if sg.Truncado {
+			break
+		}
+		frontera = siguiente
+	}
+
+	sg.Aristas = make([]subgrafoArista, 0, len(sg.Nodos))
+	for _, n := range sg.Nodos {
+		q, _ := estadoID(n.ID)
+		for _, v := range g.salidas[q] {
+			if !visto[v.hacia] {
+				continue
+			}
+			sg.Aristas = append(sg.Aristas, subgrafoArista{
+				Desde:   n.ID,
+				Simbolo: v.simbolo,
+				Hacia:   "q" + strconv.Itoa(v.hacia),
+			})
+		}
+	}
+	return sg, nil
 }
 
 // -------------------------------------------------------------- simular

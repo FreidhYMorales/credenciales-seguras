@@ -5,7 +5,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt
 from docx.text.paragraph import Paragraph
 
-PATH = "Avance_1_completo.docx"
+PATH = "docs/entregas/avance-1/Avance_1_completo.docx"
 d = docx.Document(PATH)
 
 

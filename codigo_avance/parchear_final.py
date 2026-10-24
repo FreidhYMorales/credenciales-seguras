@@ -1,6 +1,6 @@
 """Quita la mencion a ISO 27002 (no verificada) y pasa la entropia del cap. 1 a 94 simbolos."""
 import docx
-d = docx.Document("Avance_1_completo.docx")
+d = docx.Document("docs/entregas/avance-1/Avance_1_completo.docx")
 n = 0
 for p in d.paragraphs:
     for r in p.runs:
@@ -15,5 +15,5 @@ for p in d.paragraphs:
                       .replace("con los 95 imprimibles", "con los 94 visibles"))
             n += 1
 assert n == 2, n
-d.save("Avance_1_completo.docx")
+d.save("docs/entregas/avance-1/Avance_1_completo.docx")
 print("ok")

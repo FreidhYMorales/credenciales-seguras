@@ -2,7 +2,7 @@
 import copy, sys
 import docx
 
-PATH = "Avance_1_completo.docx"
+PATH = "docs/entregas/avance-1/Avance_1_completo.docx"
 d = docx.Document(PATH)
 P = list(d.paragraphs)
 

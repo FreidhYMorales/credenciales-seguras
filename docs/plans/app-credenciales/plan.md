@@ -23,8 +23,8 @@ Demo machine: the development laptop (Linux) by default; the Windows `.exe` is t
 
 Source material read in full:
 
-- `TAREA FINAL AUTÓMATAS PD.pdf` — assignment: NIST SP 800-63B + CIS policy, RFC 5322 email syntax, ER design, Thompson NFA, AFD, application with per-rule report, automaton-guided generation and security level. Grading: the final is **10 pts = 5 presentation + 5 deliverables** (document, 10 valid pairs, 10 invalid pairs, code, 1-minute video). The 5-point advance is a separate grade already earned, not part of the final 10.
-- `AYLF Final Avance corregido.pdf` (35 pp.) — already covers steps 1-4: alphabets, rules P0-P8 and C0-C6, ER per rule, regular grammars and derivations, Thompson construction with state tables, tree method, minimal DFA, test annex and security-level criterion (Annex C).
+- `docs/referencias/TAREA FINAL AUTÓMATAS PD.pdf` — assignment: NIST SP 800-63B + CIS policy, RFC 5322 email syntax, ER design, Thompson NFA, AFD, application with per-rule report, automaton-guided generation and security level. Grading: the final is **10 pts = 5 presentation + 5 deliverables** (document, 10 valid pairs, 10 invalid pairs, code, 1-minute video). The 5-point advance is a separate grade already earned, not part of the final 10.
+- `docs/entregas/avance-1/AYLF Final Avance corregido.pdf` (35 pp.) — already covers steps 1-4: alphabets, rules P0-P8 and C0-C6, ER per rule, regular grammars and derivations, Thompson construction with state tables, tree method, minimal DFA, test annex and security-level criterion (Annex C).
 - `codigo_avance/` — working Python engine: AST, Thompson NFA, subset construction, tree/followpos DFA, Moore minimization, equivalence check, DOT export, per-rule validator. Verified: state counts match the document exactly (P2 34/9/2, email 136/33/12/8, etc.).
 
 Findings that shape v1:

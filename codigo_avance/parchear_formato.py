@@ -8,7 +8,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Pt, RGBColor, Inches
 
-PATH = "Avance_1_completo.docx"
+PATH = "docs/entregas/avance-1/Avance_1_completo.docx"
 d = docx.Document(PATH)
 body = d.element.body
 BLACK = RGBColor(0, 0, 0)

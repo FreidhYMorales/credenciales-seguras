@@ -3,7 +3,7 @@ import copy
 import docx
 from docx.text.paragraph import Paragraph
 
-d = docx.Document("Avance_1_completo.docx")
+d = docx.Document("docs/entregas/avance-1/Avance_1_completo.docx")
 
 
 def set_text(p, s):
@@ -46,5 +46,5 @@ set_text(np_, "Alcance: la tupla M y la gramática anteriores cubren solo el alf
               "R10 → P7; lista finita de palabras → P8. El diseño completo, con una expresión regular por regla, está en ese capítulo.")
 for r in np_.runs:
     r.italic = True
-d.save("Avance_1_completo.docx")
+d.save("docs/entregas/avance-1/Avance_1_completo.docx")
 print("ok")

@@ -4,7 +4,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Pt
 
-d = docx.Document("Avance_1_completo.docx")
+d = docx.Document("docs/entregas/avance-1/Avance_1_completo.docx")
 n = 0
 for t in d.tables:
     if "w:drawing" in t._tbl.xml:
@@ -25,5 +25,5 @@ for p in d.paragraphs:
     if p.style.name == "Heading 1":
         p.paragraph_format.left_indent = 0
         p.paragraph_format.first_line_indent = 0
-d.save("Avance_1_completo.docx")
+d.save("docs/entregas/avance-1/Avance_1_completo.docx")
 print("celdas ajustadas:", n)

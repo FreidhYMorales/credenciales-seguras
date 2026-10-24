@@ -38,6 +38,8 @@ internal/api/       handlers y contratos JSON
 web/                frontend (HTML/CSS/JS, sin build step)
 testdata/           pares.json con los 20 casos de prueba
 docs/               arquitectura, desarrollo, ADRs, contrato de API, plan
+docs/entregas/      documentos ya entregados (avance 1)
+docs/referencias/   enunciado y estándares de consulta
 ```
 
 ## Documentación
@@ -49,6 +51,8 @@ docs/               arquitectura, desarrollo, ADRs, contrato de API, plan
 | `docs/api.md` | contrato de los endpoints |
 | `docs/adr/` | decisiones de arquitectura |
 | `docs/plans/app-credenciales/plan.md` | alcance, cronograma, definición de terminado |
+| `docs/entregas/` | documentos entregados, con la versión vigente marcada |
+| `docs/referencias/` | enunciado del curso y estándares citados |
 
 ## Autómatas
 

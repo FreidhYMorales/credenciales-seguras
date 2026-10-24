@@ -11,8 +11,8 @@ from reglas import build, PALABRAS
 from validador import validar_password, validar_correo, es_valido
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-SRC = os.path.join(BASE, "..", "Avance_1.docx")
-OUT = os.path.join(BASE, "..", "Avance_1_completo.docx")
+SRC = os.path.join(BASE, "..", "docs", "entregas", "avance-1", "Avance_1.docx")
+OUT = os.path.join(BASE, "..", "docs/entregas/avance-1/Avance_1_completo.docx")
 FIG = os.path.join(BASE, "figuras")
 
 doc = docx.Document(SRC)

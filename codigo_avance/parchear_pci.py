@@ -2,7 +2,7 @@
 import copy
 import docx
 from docx.text.paragraph import Paragraph
-d = docx.Document("Avance_1_completo.docx")
+d = docx.Document("docs/entregas/avance-1/Avance_1_completo.docx")
 n = 0
 for p in d.paragraphs:
     for r in p.runs:
@@ -21,5 +21,5 @@ q.runs[0].text = ("PCI Security Standards Council. (2024). Payment Card Industry
 for r in q.runs[1:]:
     r._r.getparent().remove(r._r)
 assert n == 1
-d.save("Avance_1_completo.docx")
+d.save("docs/entregas/avance-1/Avance_1_completo.docx")
 print("ok")

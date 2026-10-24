@@ -4,9 +4,8 @@
 **Catedrática:** Lcda. Mildred Veronica Palacios Martinez
 **Universidad Mariano Gálvez de Guatemala — Campus Huehuetenango**
 **Facultad de Ingeniería en Sistema**
-**Integrantes:** Cristian Antonio Mendoza Mendoza (4490-24-10243), Freidh Yannel Morales
-<!-- TODO: carné -->, Walter Emanuel Figueroa Vásquez <!-- TODO: carné -->
-**Fecha:** <!-- TODO: fecha de entrega -->
+**Integrantes:** Cristian Antonio Mendoza Mendoza (4490-24-10243), Freidh Yannel Morales (\_\_\_\_\_\_\_\_\_\_\_), Walter Emanuel Figueroa Vásquez (\_\_\_\_\_\_\_\_\_\_\_)
+**Fecha:** \_\_\_\_\_\_\_\_\_\_ de octubre de 2026
 
 ---
 
@@ -569,7 +568,23 @@ en Python y no es necesario para ejecutar la aplicación.
 5. **La verificación externa es la que da confianza.** Coincidir con RE2 y con un prototipo
    independiente en decenas de miles de casos vale más que cualquier inspección manual.
 
-<!-- TODO: agregar el párrafo de cierre con la experiencia del equipo -->
+El proyecto empezó como un validador de expresiones regulares sueltas y terminó como una
+sola máquina: el producto de los AFD minimizados, construido una vez al arrancar y
+recorrido después tanto para validar como para generar. Ese cambio de punto de vista fue
+el aprendizaje principal. Verificar regla por regla es fácil de escribir y difícil de
+auditar; juntar las reglas en un autómata obliga a fijar el alfabeto, a medir el tamaño
+del producto y a demostrar que los dos métodos de construcción coinciden. Las decisiones
+incómodas —qué pasa con la ñ, con los espacios, con el largo máximo— dejaron de ser
+detalles de una expresión regular y pasaron a ser contratos documentados y cubiertos por
+pruebas.
+
+Queda trabajo por delante. Las reglas cubren la forma, no la calidad real de una
+contraseña, y el umbral de 15 caracteres para el nivel medio es una convención apoyada en
+NIST, no una garantía. La herramienta tampoco puede saber si una credencial ya se filtró.
+Lo que sí hace, y de forma verificable, es demostrar que una credencial cumple la política
+declarada, con la misma respuesta cada vez y con el mismo par reproducible con la misma
+semilla. Para un curso de autómatas, esa es la lección que queda: la teoría sirve para
+construir software que se puede auditar.
 
 ---
 

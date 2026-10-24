@@ -2,7 +2,7 @@ GO ?= go
 BIN := bin/credenciales
 PYTHON ?= python3
 
-.PHONY: check check-oracle fmt test build build-windows run figures pairs pares-tabla documento smoke-windows
+.PHONY: check check-oracle fmt test build build-windows run figures pairs pares-tabla documento entrega smoke-windows
 
 # Single quality gate: format check (no rewrite), lint, tests. Read-only,
 # non-interactive, Go-only. Never weaken a step to make it pass.
@@ -50,6 +50,20 @@ pares-tabla:
 # python-docx and LibreOffice, and the outputs are committed anyway.
 documento:
 	$(PYTHON) tools/documento/exportar.py
+
+# Pack what gets handed in: both binaries, the document and a readme. The
+# document is the committed one, so this does not need python-docx.
+entrega: build build-windows
+	@mkdir -p dist
+	rm -rf dist/entrega && mkdir -p dist/entrega
+	cp $(BIN) dist/entrega/credenciales-linux
+	cp $(BIN).exe dist/entrega/credenciales.exe
+	cp docs/entregas/final/Credenciales_seguras.pdf dist/entrega/
+	cp docs/entregas/final/Credenciales_seguras.docx dist/entrega/
+	cp docs/entregas/final/LEEME.txt dist/entrega/
+	rm -f dist/credenciales-seguras.zip
+	cd dist/entrega && zip -q ../credenciales-seguras.zip *
+	@ls -lh dist/credenciales-seguras.zip
 
 # Smoke test of the Windows binary under Wine: start it, wait for /api/salud,
 # validate one credential, stop it. Kept out of `check`, which must stay

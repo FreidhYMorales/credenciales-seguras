@@ -1,0 +1,40 @@
+# Credenciales seguras — entrega final
+
+Validador y generador de credenciales sobre autómatas finitos.
+Curso: Autómatas y Lenguajes Formales, Universidad Mariano Gálvez de Guatemala.
+
+## Contenido
+
+| Archivo | Qué es |
+|---|---|
+| `credenciales-linux` | ejecutable para Linux x86-64 |
+| `credenciales.exe` | ejecutable para Windows x86-64 |
+| `Credenciales_seguras.pdf` | documento final, 20 páginas |
+| `Credenciales_seguras.docx` | la misma fuente, editable |
+| `LEEME.txt` | este archivo |
+
+## Cómo ejecutar
+
+No hay que instalar nada: el binario lleva el frontend embebido y no necesita Go ni
+Python.
+
+```sh
+./credenciales-linux          # Linux; abre http://127.0.0.1:8080
+credenciales.exe              # Windows; doble clic o desde cmd
+./credenciales-linux -addr 127.0.0.1:9090   # otro puerto
+```
+
+Después de arrancarlo, abrir <http://127.0.0.1:8080> en el navegador. Se puede apagar
+con Ctrl+C.
+
+## Valores de demostración
+
+- Contraseña: semilla 2026, longitud 20 -> `>nslx613LK2%|#PxFbA5` (Fuerte, 131 bits).
+- Correo: semilla 4490 -> `IykLbhvynB@F.mT`.
+- Los 20 pares calificados están en la pantalla **Pares de prueba** y en la sección 8
+  del documento.
+
+## Código
+
+El repositorio, con el código fuente y las pruebas, está en
+<https://github.com/FreidhYMorales/credenciales-seguras>.

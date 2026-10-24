@@ -25,6 +25,7 @@ make pairs          # regenerate testdata/pares.json (deterministic seeds)
 make pares-tabla    # render the 20 pairs as Markdown (docs/entregas/final/pares.md)
 make check-oracle   # Python differential, optional
 make documento      # render the final document to .docx and .pdf, optional
+make entrega        # pack binaries + document into dist/credenciales-seguras.zip
 make smoke-windows  # start the .exe under Wine and validate one credential
 ```
 

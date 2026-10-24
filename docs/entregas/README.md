@@ -27,9 +27,14 @@ Entrega final: documento, capturas y los 20 pares en forma legible.
 
 | Archivo | Qué es | Estado |
 |---|---|---|
-| `documento.md` | documento final en Markdown, listo para exportar | borrador avanzado |
+| `Credenciales_seguras.pdf` | documento final, 20 pp., el archivo para entregar | **vigente** |
+| `Credenciales_seguras.docx` | fuente editable del PDF, generada desde el Markdown | vigente |
+| `documento.md` | fuente en Markdown del documento final | vigente |
 | `pares.md` | las dos tablas de los 20 pares, generadas desde `pares.json` | generado |
 | `capturas/` | las seis figuras del documento, tomadas del build actual | vigente |
+
+El `.docx` y el `.pdf` se generan con `make documento` (necesita `python-docx` y
+LibreOffice; el resto del proyecto no). Ambos están versionados.
 
 `pares.md` se reescribe con `make pares-tabla` y la prueba `TestPairsMarkdownAlDia`
 falla si el archivo se desincroniza de `testdata/pares.json`. Las tablas están

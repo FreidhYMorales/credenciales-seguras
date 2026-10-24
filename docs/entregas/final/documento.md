@@ -3,7 +3,9 @@
 **Curso:** Autómatas y Lenguajes Formales
 **Catedrática:** Lcda. Mildred Veronica Palacios Martinez
 **Universidad Mariano Gálvez de Guatemala — Campus Huehuetenango**
-**Integrantes:** <!-- TODO: nombres y carné -->
+**Facultad de Ingeniería en Sistema**
+**Integrantes:** Cristian Antonio Mendoza Mendoza (4490-24-10243), Freidh Yannel Morales
+<!-- TODO: carné -->, Walter Emanuel Figueroa Vásquez <!-- TODO: carné -->
 **Fecha:** <!-- TODO: fecha de entrega -->
 
 ---
@@ -15,16 +17,17 @@ autómatas finitos. El validador decide si un correo electrónico y una contrase
 un conjunto de reglas derivadas de NIST SP 800-63B, del CIS Password Policy Guide y del
 RFC 5322, e informa **cuál regla exacta** falla cuando la credencial es rechazada. El
 generador no sortea cadenas al azar hasta que una pase: construye el autómata producto de
-las cinco reglas de aceptación de contraseñas, lo minimiza, y camina sobre él tomando
-únicamente transiciones desde las que todavía es posible terminar en un estado de
+las cinco reglas de aceptación de contraseñas sobre sus AFD minimizados, y camina sobre él
+tomando únicamente transiciones desde las que todavía es posible terminar en un estado de
 aceptación. El resultado es determinista para una semilla dada y se puede reproducir paso
 por paso.
 
-Las 17 reglas se escriben como expresiones regulares, se convierten a un AFND-ε por el
-método de Thompson, se determinan por subconjuntos, se contrastan con el método del árbol
-y se minimizan por el algoritmo de Moore. La implementación en Go se verificó contra dos
-oráculos independientes: la biblioteca RE2 y el prototipo en Python del primer avance.
-Ambos coinciden en el 100 % de los casos.
+Las 17 reglas se declaran como expresiones regulares —o como verificaciones de conjunto,
+en el caso de P0 y C0—, se convierten a un AFND-ε por el método de Thompson, se determinan
+por subconjuntos, se contrastan con el método del árbol y se minimizan por el algoritmo de
+Moore. La implementación en Go se verificó contra dos oráculos independientes: la
+biblioteca RE2 y el prototipo en Python del primer avance. Ambos coinciden en el 100 % de
+los casos.
 
 ---
 
@@ -35,11 +38,11 @@ condiciones dispersas en el código: `len(s) >= 15`, `strings.ContainsAny(s, "!@
 `regexp.MatchString(...)`. Ese enfoque funciona, pero no responde la pregunta que interesa
 en un curso de lenguajes formales: **¿qué lenguaje acepta el sistema?**
 
-Este proyecto responde esa pregunta de forma explícita. Cada regla es una expresión
-regular sobre un alfabeto declarado; cada expresión se compila a un autómata finito
-determinista mínimo; y tanto la validación como la generación operan sobre esos autómatas,
-no sobre condicionales ad hoc. De ahí se obtienen tres propiedades que el trabajo
-demuestra y mide:
+Este proyecto responde esa pregunta de forma explícita. Cada regla de forma es una
+expresión regular sobre un alfabeto declarado; cada expresión se compila a un autómata
+finito determinista mínimo; y tanto la validación como la generación operan sobre esos
+autómatas, no sobre condicionales ad hoc. De ahí se obtienen tres propiedades que el
+trabajo demuestra y mide:
 
 1. **Trazabilidad.** Cuando una contraseña es rechazada, el reporte nombra la regla y el
    autómata que la rechazó, no un mensaje genérico.
@@ -61,8 +64,9 @@ caminata guiada y la verificación.
 
 ### 2.1 NIST SP 800-63B
 
-La guía de identidad digital del NIST fija qué debe exigir un sistema de autenticación y,
-sobre todo, qué **no** debe exigir. Los puntos que este trabajo adopta:
+La guía de identidad digital del NIST (SP 800-63B, Revisión 4, 2025) fija qué debe exigir
+un sistema de autenticación y, sobre todo, qué **no** debe exigir. Los puntos que este
+trabajo adopta:
 
 - Longitud mínima de 15 caracteres para autenticadores de un solo factor.
 - Longitud máxima de al menos 64 caracteres, sin truncar la entrada.
@@ -81,8 +85,9 @@ son políticas configurables y no requisitos del NIST.
 ### 2.2 CIS Password Policy Guide
 
 El CIS no compite con NIST: lo traduce a valores operativos. De ahí se toman los umbrales
-de longitud, la noción de historial y la lista de palabras prohibidas que alimenta la regla
-P8.
+de longitud y la lista de palabras prohibidas que alimenta P8. El historial de contraseñas
+y el bloqueo de cuenta que el CIS también recomienda son políticas de servidor con estado,
+fuera del alcance de un validador léxico, y por eso no se implementan.
 
 ### 2.3 RFC 5322
 
@@ -96,13 +101,14 @@ autómata sin cambiar el método.
 
 | Fuente | Regla del sistema |
 |---|---|
-| NIST 800-63B §5.1.1.2 (longitud) | P1: entre 15 y 64 caracteres |
+| NIST 800-63B Rev. 4 (longitud mínima) | P1: entre 15 y 64 caracteres |
 | NIST 800-63B (complejidad) | P2-P5: mayúscula, minúscula, dígito y especial |
 | NIST 800-63B (repeticiones) | P6: tres caracteres idénticos consecutivos |
 | NIST 800-63B (secuencias) | P7: cuatro caracteres en orden ascendente o descendente |
 | NIST + CIS (blocklist) | P8: palabra prohibida |
-| RFC 5322 §3.2.3 (atext) | C1-C3: estructura, parte local y longitud local |
-| RFC 5322 §3.4.1 (dominio) | C4-C6: etiquetas, TLD y longitud del dominio |
+| RFC 5322 §3.2.3 (atext) | C1-C2: estructura y parte local |
+| RFC 5322 §3.4.1 (dominio) | C4-C5: etiquetas y TLD |
+| RFC 5321 §4.5.3.1 y RFC 1035 §2.3.4 (longitudes) | C3, C4 y C6: 64, 63 y 255 octetos |
 
 ---
 
@@ -232,7 +238,7 @@ arranque.
 ## 5. Verificación de la implementación
 
 Ninguna de las afirmaciones anteriores se apoya en inspección visual. Hay tres controles
-automáticos, y los tres corren en la puerta de calidad.
+automáticos: dos corren en `make check` y el tercero en `make check-oracle`.
 
 ### 5.1 Equivalencia interna
 
@@ -244,7 +250,8 @@ no, los lenguajes difieren. No es una muestra: es una decisión.
 ### 5.2 Oráculo RE2
 
 Cada expresión se traduce a sintaxis RE2 y se compara con el autómata sobre **1500 cadenas
-por regla**, generadas para cubrir los bordes del lenguaje. Total: **22 500
+por regla**: la mitad son mutaciones de una cadena válida, que alcanzan las fronteras de
+longitud y de clase, y la otra mitad son cadenas aleatorias. Total: **22 500
 comparaciones, 0 discrepancias**. Este oráculo es el que detecta errores de traducción: si
 la expresión que se muestra en pantalla no es la que el autómata implementa, RE2 y el
 autómata discrepan en alguna cadena.
@@ -266,8 +273,8 @@ error de índices o de orden de estados aparecería como un conteo distinto.
 `POST /api/validar` devuelve, para cada regla, su identificador, si se evaluó, si pasó y un
 mensaje en español. Las reglas que no se evalúan aparecen como omitidas en lugar de
 desaparecer: si P0 falla porque hay un carácter fuera del alfabeto, el reporte muestra las
-nueve reglas de contraseña con las ocho restantes omitidas. Así el usuario ve el conjunto
-completo y entiende por qué se detuvo la evaluación.
+nueve reglas de contraseña, con P1 a P8 marcadas como omitidas. Así el usuario ve el
+conjunto completo y entiende por qué se detuvo la evaluación.
 
 ### 6.2 Nivel de seguridad
 
@@ -296,6 +303,10 @@ prohibida es **Baja**, no Fuerte, porque el nivel se calcula después de los fil
 | Espacios | ambos tipos | se eliminan antes de validar |
 | Blocklist | palabra prohibida en cadena larga | Baja |
 
+Los tres límites de longitud del correo no salen del RFC 5322, que no los fija: el de 64 en
+la parte local y el de 255 en el dominio vienen del RFC 5321, y el de 63 por etiqueta, del
+RFC 1035. Por eso C3, C4 y C6 los declaran explícitamente en lugar de darlos por supuestos.
+
 ---
 
 ## 7. Generación guiada por el autómata
@@ -308,10 +319,13 @@ quinta (q₁, q₂, q₃, q₄, q₅) de estados de los AFD minimizados, y una t
 cuando las cinco componentes pueden tomarla con el mismo símbolo.
 
 El tamaño teórico es el producto de los tamaños, 65 × 2 × 2 × 2 × 2 = 1040 estados. El
-producto **alcanzable** desde el estado inicial tiene **944** estados: 96 combinaciones son
-inalcanzables porque P2-P5 comparten alfabeto y estructura. El programa construye el
-producto sobre los AFD **minimizados**, no sobre los de subconjuntos; hacerlo sobre estos
-últimos daría 257 × 9⁴ ≈ 1.69 millones de estados, inviable.
+producto **alcanzable** desde el estado inicial tiene **944**: los 65 estados de P1
+aparecen todos, pero no con las 16 combinaciones de P2-P5. Con menos de cuatro símbolos no
+todas las clases pueden haber aparecido (1, 4, 10 y 14 combinaciones para 0, 1, 2 y 3
+caracteres leídos), y aun con cuatro o más queda una combinación que ninguna cadena
+produce: la de las cuatro clases sin aparecer. El programa construye el producto sobre los
+AFD **minimizados**, no sobre los de subconjuntos; hacerlo sobre estos últimos daría
+257 × 9⁴ ≈ 1.69 millones de estados, inviable.
 
 El alfabeto del producto se toma de P1, cuyas cuatro clases (L, l, N, S) cubren Σ<sub>P</sub>
 sin solaparse. Cada transición del producto es, entonces, una transición por clase, y el
@@ -339,8 +353,9 @@ que preservaba la alcanzabilidad. Al final, el estado es de aceptación por cons
 
 Esto es lo que distingue al generador de un `random.choice` sobre el alfabeto seguido de un
 filtro: la probabilidad de producir una cadena válida por sorteo es ínfima para 20
-caracteres con cinco reglas simultáneas, mientras que la caminata produce una cadena válida
-en el primer intento.
+caracteres con cinco reglas simultáneas, mientras que la caminata produce una cadena que el
+producto acepta en el primer intento, y solo la descarta si después la atrapa un filtro de
+rechazo.
 
 ### 7.3 Filtros de rechazo
 
@@ -351,11 +366,11 @@ evalúa contra los tres filtros; si alguno la acepta (es decir, si contiene una 
 una secuencia o una palabra prohibida), se descarta y se vuelve a caminar con el **mismo**
 generador pseudoaleatorio, que continúa su secuencia.
 
-El límite es de 200 intentos; con las reglas actuales el rechazo es poco frecuente y el
-límite no se alcanza. El generador de correos usa la misma idea sobre el AFD mínimo de C\*,
-con un detalle importante: una caminata uniforme sobre C\* casi nunca encuentra la arroba,
-porque hay muchas más transiciones que la evitan. La guía por alcanzabilidad es la que
-fuerza a que la parte local, la arroba, las etiquetas y el TLD aparezcan en orden.
+El límite es de 200 intentos; en las pruebas de propiedad el límite no se alcanza nunca.
+El generador de correos usa la misma idea sobre el AFD mínimo de C\*, con un detalle
+importante: una caminata uniforme sobre C\* casi nunca encuentra la arroba, porque hay
+muchas más transiciones que la evitan. La guía por alcanzabilidad es la que fuerza a que la
+parte local, la arroba, las etiquetas y el TLD aparezcan en orden.
 
 ### 7.4 Determinismo
 
@@ -379,8 +394,10 @@ del símbolo consumido.*
 ### 7.5 Propiedad del generador
 
 Se generaron **1000 contraseñas** con longitudes entre 15 y 64 y **300 correos**; el 100 %
-fue aceptado por el validador. La prueba corre además dos veces en el mismo proceso y una
-vez tras reiniciar, para comprobar que el estado del generador no se filtra entre llamadas.
+fue aceptado por el validador. La misma semilla se ejecuta dos veces dentro del proceso
+para comparar valor y camino, y los 20 pares se regeneran byte a byte desde un archivo
+construido en una ejecución anterior: eso cubre la comprobación entre reinicios, porque el
+generador no guarda estado global.
 
 ---
 
@@ -388,8 +405,8 @@ vez tras reiniciar, para comprobar que el estado del generador no se filtra entr
 
 La entrega incluye diez pares válidos, generados por la herramienta, y diez inválidos, cada
 uno con exactamente una credencial defectuosa. Las tablas se generan desde
-`testdata/pares.json` con `make pares-tabla`; una prueba falla si el documento y el archivo
-se desincronizan.
+`testdata/pares.json` con `make pares-tabla`, que escribe `pares.md`; las de este capítulo
+son una copia de ese fragmento, y una prueba falla si `pares.md` se desincroniza del JSON.
 
 ### Pares válidos
 
@@ -475,25 +492,30 @@ probarlo con sus propios casos.
 
 ![Validar un par: veredicto conjunto y los dos reportes por regla](capturas/validar-par.png)
 
-*Figura 3. Validar en modo par. La contraseña del par 18 es rechazada por P8 (palabra
-prohibida) y el reporte del correo, que sí es válido, se muestra completo debajo.*
+*Figura 3. Validar en modo par. El correo pasa sus siete reglas y queda en verde; la
+contraseña contiene una palabra prohibida, P8 la marca en rojo con el mensaje que nombra el
+motivo, y el nivel baja a Baja. El par es inválido porque basta que falle una de las dos
+mitades.*
 
 ![Explorador: P2 con 34 estados en el AFND, 9 por subconjuntos y 2 en el mínimo](capturas/explorador-p2.png)
 
-*Figura 4. Explorador sobre P2. Los cuatro conteos de la regla aparecen en la cabecera y la
-tabla de transiciones se pagina debajo.*
+*Figura 4. Explorador sobre P2. La cabecera resume los cuatro conteos —34 en el AFND-ε, 9
+por subconjuntos, 2 en el árbol y 2 en el mínimo— y el grafo dibuja el AFD por subconjuntos,
+que es la vista seleccionada. La tabla de transiciones y el simulador quedan debajo, en la
+misma pantalla.*
 
 ![Explorador: vecindad de q0 en P6, un autómata de 565 estados por subconjuntos](capturas/explorador-vecindad.png)
 
-*Figura 5. Vecindad navegable. Las vistas que superan el umbral de dibujo se muestran como
-un despliegue en anchura desde el estado elegido: 21 de 565 estados, con la tabla de
-transiciones disponible debajo. Un clic en cualquier nodo lo vuelve centro.*
+*Figura 5. Vecindad navegable. Cuando la vista supera el umbral de dibujo, el explorador
+muestra solo la vecindad del estado elegido hasta la profundidad indicada: 21 de los 565
+estados de P6 por subconjuntos, y 20 de sus 200 aristas. Un clic en cualquier nodo lo vuelve
+centro.*
 
 ![Reglas: las 17 reglas con su expresión formal y su traducción a RE2](capturas/reglas.png)
 
-*Figura 6. Pantalla de reglas. La traducción a RE2 de P1 se muestra recortada, porque la
-repetición `{15,64}` se expande; un clic en la celda la despliega completa.*
-
+*Figura 6. Pantalla de reglas, con las 17 en una sola vista. La traducción a RE2 de P1 se
+muestra recortada a tres líneas porque la repetición `{15,64}` se expande a miles de
+caracteres; un clic en la celda la despliega completa.*
 
 ### 9.3 Contrato de la API
 
@@ -525,21 +547,22 @@ en Python y no es necesario para ejecutar la aplicación.
 | Diferencial Python | 15 reglas, 6000 cadenas | mismos conteos y veredictos |
 | Generador | 1000 contraseñas + 300 correos | 100 % válidas, deterministas |
 | Pares | 20 pares | 20 veredictos correctos, regeneración byte a byte |
-| Fronteras | longitudes, niveles, etiquetas, dominios | todos los casos del cuadro 6.3 |
+| Fronteras | longitudes, niveles, etiquetas, dominios | todos los casos de la sección 6.3 |
 
 ---
 
 ## 11. Conclusiones
 
-1. **El lenguaje se puede declarar.** Las 17 reglas caben en expresiones regulares sobre
-   alfabetos explícitos, y esa declaración es ejecutable: el mismo texto que se muestra en
-   pantalla es el que se compila.
+1. **El lenguaje se puede declarar.** Las 15 reglas de forma caben en expresiones regulares
+   sobre alfabetos explícitos, y las dos de alfabeto se reducen a una verificación de
+   conjunto. Esa declaración es ejecutable: el mismo texto que se muestra en pantalla es el
+   que se compila.
 2. **Construir dos veces sirve.** El método del árbol y el de subconjuntos producen
    autómatas distintos del mismo lenguaje; comprobar su equivalencia detecta errores que
    una batería de cadenas no detectaría.
-3. **La minimización no es cosmética.** Reduce el producto de 1040 combinaciones teóricas a
-   944 alcanzables, y el autómata de C\* de 12 a 8 estados; sin ella, el producto sobre los
-   AFD de subconjuntos sería inviable.
+3. **La minimización no es cosmética.** Sobre los AFD de subconjuntos el producto tendría
+   1.69 millones de estados; sobre los mínimos son 1040 teóricos y 944 alcanzables. Además
+   reduce el autómata de C\* de 12 a 8 estados.
 4. **Generar es caminar, no sortear.** La tabla de alcanzabilidad convierte la generación en
    una caminata dirigida que no puede atascarse, y el determinismo hace la demostración
    reproducible.
@@ -562,12 +585,36 @@ make check-oracle     # diferencial contra el prototipo Python
 
 Semillas de demostración: contraseña `2026` (longitud 20) y correo `4490`.
 
+Repositorio del código: <https://github.com/FreidhYMorales/credenciales-seguras>.
+
 ---
 
 ## Anexo B. Referencias
 
-- NIST, *Digital Identity Guidelines: Authentication and Lifecycle Management*, SP 800-63B.
-- Center for Internet Security, *CIS Password Policy Guide*, v21.12 (2021).
-- IETF, *RFC 5322: Internet Message Format*.
-- PCI Security Standards Council, *PCI-DSS v4.0.1*, requisito 8.3 (contraste).
-- Documento del primer avance: `docs/entregas/avance-1/AYLF Final Avance corregido.pdf`.
+Aho, A. V., Lam, M. S., Sethi, R. y Ullman, J. D. (2006). *Compilers: Principles,
+Techniques, and Tools* (2.ª ed.). Addison-Wesley.
+
+Center for Internet Security. (2021). *CIS Password Policy Guide*, versión 21.12.
+<https://www.cisecurity.org>
+
+Hopcroft, J. E., Motwani, R. y Ullman, J. D. (2007). *Introduction to Automata Theory,
+Languages, and Computation* (3.ª ed.). Pearson/Addison-Wesley.
+
+Klensin, J. (2008). *RFC 5321: Simple Mail Transfer Protocol*. Internet Engineering Task
+Force. <https://www.rfc-editor.org/info/rfc5321/>
+
+Mockapetris, P. (1987). *RFC 1035: Domain Names — Implementation and Specification*.
+Internet Engineering Task Force. <https://www.rfc-editor.org/info/rfc1035/>
+
+NIST. (2025). *NIST Special Publication 800-63B, Revision 4: Digital Identity Guidelines —
+Authentication and Lifecycle Management*. National Institute of Standards and Technology.
+<https://pages.nist.gov/800-63-4/sp800-63b.html>
+
+PCI Security Standards Council. (2024). *Payment Card Industry Data Security Standard:
+Requirements and Testing Procedures*, v4.0.1 (contraste: fija 12 caracteres como mínimo,
+frente a los 15 del NIST). <https://www.pcisecuritystandards.org>
+
+Resnick, P. (Ed.). (2008). *RFC 5322: Internet Message Format*. Internet Engineering Task
+Force. <https://www.rfc-editor.org/info/rfc5322/>
+
+Documento del primer avance: `docs/entregas/avance-1/AYLF Final Avance corregido.pdf`.

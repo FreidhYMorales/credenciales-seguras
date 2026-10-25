@@ -486,7 +486,7 @@ probarlo con sus propios casos.
 
 | Pantalla | Qué muestra |
 |---|---|
-| Validar | reporte por regla de un correo, una contraseña o un par completo, con nivel y entropía |
+| Validar | reporte por regla de un correo, una contraseña o un par completo, con nivel y entropía; se recalcula al escribir y cada regla ofrece el recorrido de la cadena |
 | Generar | credencial generada desde una semilla, con el camino recorrido sobre el producto |
 | Explorador | las cuatro vistas del autómata (AFND, subconjuntos, árbol, mínimo), la tabla de transiciones, la simulación con traza y una vecindad navegable para las vistas grandes |
 | Reglas | las 17 reglas con su expresión, su traducción a RE2 y sus conteos |
@@ -498,6 +498,11 @@ probarlo con sus propios casos.
 contraseña contiene una palabra prohibida, P8 la marca en rojo con el mensaje que nombra el
 motivo, y el nivel baja a Baja. El par es inválido porque basta que falle una de las dos
 mitades.*
+
+El reporte se recalcula mientras se escribe, sin apretar el botón, y cada regla con autómata
+ofrece su recorrido: la misma cadena simulada sobre el AFD mínimo, en el Explorador, con la
+posición donde se corta. Es el puente entre el veredicto por regla y la construcción de la
+sección 6.
 
 ![Explorador: P2 con 34 estados en el AFND, 9 por subconjuntos y 2 en el mínimo](capturas/explorador-p2.png)
 

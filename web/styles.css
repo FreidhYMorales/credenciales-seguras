@@ -70,6 +70,8 @@ main { max-width: 1120px; margin: 0 auto; padding: 24px; }
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 20px;
+  /* Room to breathe when a card is scrolled into view (report -> trace jump). */
+  scroll-margin-block: 20px;
   margin-bottom: 16px;
 }
 
@@ -138,6 +140,10 @@ th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: upp
 tr:last-child td { border-bottom: 0; }
 td.mono, .mono { font-family: var(--mono); font-size: 13px; }
 td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* A per-row action is not content: keep the column as narrow as the button. */
+td.accion { width: 1%; white-space: nowrap; text-align: right; }
+/* The report jump scrolls the trace into view; keep it off the window edge. */
+#sim-traza { scroll-margin-block-end: 90px; }
 tr.skipped td { color: var(--muted); }
 
 .mark-ok { color: var(--ok); font-weight: 700; }

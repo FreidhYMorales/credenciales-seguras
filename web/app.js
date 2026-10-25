@@ -47,6 +47,7 @@ const state = {
   filtro: 'todas',
   pares: [],
   genTipo: 'password',
+  simValor: null,
 };
 
 // --------------------------------------------------------------------- tabs
@@ -149,20 +150,42 @@ $('#ver').addEventListener('click', () => {
   $('#ver').textContent = hidden ? 'ocultar' : 'ver';
 });
 
-async function validar() {
+// turnoValidar discards the answer of a request the user already outdated by
+// typing: without it a slow reply could overwrite a newer report.
+let turnoValidar = 0;
+
+async function validar(opciones = {}) {
+  clearTimeout(vivoTimer);
+  const mostrarCargando = opciones.mostrarCargando !== false;
   const valor = campoActual().value;
   const out = $('#reporte');
+  const turno = ++turnoValidar;
   if (!valor.trim()) {
     out.innerHTML = `<div class="card"><div class="empty">Escribí un valor para validar.</div></div>`;
     return;
   }
-  out.innerHTML = `<div class="card"><div class="empty">Validando…</div></div>`;
+  // Live validation runs on every keystroke, so it keeps the previous report on
+  // screen instead of flashing "Validando…" while the user types.
+  if (mostrarCargando) out.innerHTML = `<div class="card"><div class="empty">Validando…</div></div>`;
   try {
     const rep = await postJSON('/api/validar', { tipo: state.tipo, valor });
+    if (turno !== turnoValidar) return;
     out.innerHTML = renderReporte(rep, valor);
+    enlazarRecorridos(out);
   } catch (err) {
+    if (turno !== turnoValidar) return;
     out.innerHTML = `<div class="card">${errorBox(err)}</div>`;
   }
+}
+
+// The report follows the field with a short pause, which is what makes the
+// screen feel like a checker and not a form. Enter and the button skip the wait.
+const ESPERA_VIVO = 350;
+let vivoTimer = null;
+
+function validarEnVivo() {
+  clearTimeout(vivoTimer);
+  vivoTimer = setTimeout(() => { validar({ mostrarCargando: false }); }, ESPERA_VIVO);
 }
 
 // validarPar validates the two credentials at the same time and joins the two
@@ -195,9 +218,22 @@ async function validarPar() {
     out.innerHTML = veredicto
       + renderReporte(repEmail, email, 'Correo')
       + renderReporte(repPass, pass, 'Contraseña');
+    enlazarRecorridos(out);
   } catch (err) {
     out.innerHTML = `<div class="card">${errorBox(err)}</div>`;
   }
+}
+
+// enlazarRecorridos wires "recorrido" on each report row to the explorer
+// simulator: same value, minimized automaton, trace already run. The value
+// travels in the button so one binder serves both single and pair reports.
+function enlazarRecorridos(out) {
+  $$('[data-recorrido]', out).forEach((b) => b.addEventListener('click', () => {
+    state.simValor = b.dataset.valor || '';
+    setVista('min'); // the validation itself runs on the minimized AFD
+    irA('explorador', b.dataset.recorrido);
+    selectRegla(b.dataset.recorrido);
+  }));
 }
 
 function renderReporte(rep, original, titulo) {
@@ -215,14 +251,21 @@ function renderReporte(rep, original, titulo) {
     nivel = `<span class="pill ${cls}">Nivel: ${esc(rep.nivel)}${bits}</span>`;
   }
 
+  // The trace makes sense per rule and only when there is an automaton: P0/C0
+  // are set checks, and the rule metadata says so. Without metadata the button
+  // still appears and the explorer explains why there is no trace.
+  const valor = rep.normalizado ?? original;
   const filas = rep.reglas.map((r) => {
     if (!r.evaluado) {
       return `<tr class="skipped"><td class="mono">${esc(r.id)}</td><td>${esc(r.nombre)}</td>
-        <td class="mark-skip">—</td><td>no evaluada</td></tr>`;
+        <td class="mark-skip">—</td><td>no evaluada</td><td></td></tr>`;
     }
     const marca = r.ok ? '<span class="mark-ok">✔</span>' : '<span class="mark-bad">✘</span>';
+    const meta = state.reglas.find((x) => x.id === r.id);
+    const boton = meta && !meta.tiene_er ? '' : `<button class="ghost small" data-recorrido="${esc(r.id)}"
+      data-valor="${esc(valor)}" title="ver el recorrido de esta cadena en el autómata">recorrido</button>`;
     return `<tr><td class="mono">${esc(r.id)}</td><td>${esc(r.nombre)}</td>
-      <td>${marca}</td><td>${esc(r.mensaje || '')}</td></tr>`;
+      <td>${marca}</td><td>${esc(r.mensaje || '')}</td><td class="accion">${boton}</td></tr>`;
   }).join('');
 
   const normalizado = rep.normalizado !== original
@@ -238,15 +281,21 @@ function renderReporte(rep, original, titulo) {
     </div>
     ${normalizado}
     <table>
-      <thead><tr><th scope="col">Regla</th><th scope="col">Nombre</th><th scope="col"></th><th scope="col">Detalle</th></tr></thead>
+      <thead><tr><th scope="col">Regla</th><th scope="col">Nombre</th><th scope="col"></th><th scope="col">Detalle</th><th scope="col"></th></tr></thead>
       <tbody>${filas}</tbody>
     </table>
   </div>`;
 }
 
-$('#validar').addEventListener('click', validar);
+$('#validar').addEventListener('click', () => validar());
 $('#valor-pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') validar(); });
 $('#valor-email').addEventListener('keydown', (e) => { if (e.key === 'Enter') validar(); });
+
+// Live validation on the field of the active mode. Pair mode keeps the button:
+// two fields would double every request while the user types.
+['#valor-pass', '#valor-email'].forEach((sel) => {
+  $(sel).addEventListener('input', () => validarEnVivo());
+});
 $('#validar-par').addEventListener('click', validarPar);
 $('#par-ver').addEventListener('click', () => {
   const input = $('#par-pass');
@@ -362,12 +411,32 @@ function selectRegla(id) {
 }
 
 $$('#explorador-vistas button').forEach((b) => b.addEventListener('click', () => {
-  state.vista = b.dataset.vista;
-  state.pagina = 1;
-  state.centro = null;
-  $$('#explorador-vistas button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.vista === state.vista)));
+  setVista(b.dataset.vista);
   cargarVista();
 }));
+
+function setVista(vista) {
+  state.vista = vista;
+  state.pagina = 1;
+  state.centro = null;
+  $$('#explorador-vistas button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.vista === vista)));
+}
+
+// aplicarSimPendiente consumes the value a report jump left behind, so the
+// trace runs once and clicking through automata afterwards does not replay it.
+// The minimal scroll keeps the automaton above in sight: the trace is what the
+// user came for, but the figure explains it.
+function aplicarSimPendiente() {
+  const valor = state.simValor;
+  if (valor == null) return;
+  state.simValor = null;
+  $('#sim-valor').value = valor;
+  if (!state.regla || !state.regla.tiene_er) return;
+  simular();
+  // Scroll the trace itself, not the card: it lands with the automaton still
+  // partly visible above instead of pushing it out of the window.
+  $('#sim-traza').scrollIntoView({ block: 'end' });
+}
 
 async function cargarVista() {
   const r = state.regla;
@@ -380,6 +449,7 @@ async function cargarVista() {
     $('#explorador-grafo').innerHTML = `<div class="note">${esc(r.id)} es una verificación de conjunto sobre el alfabeto: no tiene autómata.</div>`;
     $('#explorador-tabla').innerHTML = '<div class="empty">—</div>';
     $('#explorador-pager').innerHTML = '';
+    aplicarSimPendiente();
     return;
   }
 
@@ -398,6 +468,7 @@ async function cargarVista() {
       await cargarSubgrafo();
     }
     renderTransiciones(datos);
+    aplicarSimPendiente();
   } catch (err) {
     $('#explorador-grafo').innerHTML = errorBox(err);
   }
@@ -645,7 +716,7 @@ function renderTransiciones(datos) {
   $('#pag-next')?.addEventListener('click', () => { state.pagina++; cargarVista(); });
 }
 
-$('#simular').addEventListener('click', async () => {
+async function simular() {
   const r = state.regla;
   const out = $('#sim-traza');
   if (!r) { out.innerHTML = '<span class="empty">Elegí una regla primero.</span>'; return; }
@@ -661,7 +732,9 @@ $('#simular').addEventListener('click', async () => {
   } catch (err) {
     out.innerHTML = errorBox(err);
   }
-});
+}
+
+$('#simular').addEventListener('click', simular);
 
 // ------------------------------------------------------------------- reglas
 
